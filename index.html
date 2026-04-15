@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>三角洲战队 · 战绩数据库</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --bg: #090c10;
+  --bg2: #0d1117;
+  --bg3: #161b22;
+  --border: #21262d;
+  --accent: #e8a020;
+  --accent2: #f0c040;
+  --red: #ff4444;
+  --green: #39d353;
+  --blue: #58a6ff;
+  --text: #e6edf3;
+  --text2: #8b949e;
+  --text3: #484f58;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Noto Sans SC', sans-serif;
+  min-height: 100vh;
+}
+
+/* HEADER */
+header {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: 0 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 60px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.logo {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--accent);
+}
+.logo span { color: var(--text2); font-weight: 400; }
+nav a {
+  color: var(--text2);
+  text-decoration: none;
+  margin-left: 24px;
+  font-size: 14px;
+  transition: color 0.2s;
+}
+nav a:hover, nav a.active { color: var(--text); }
+nav a.active { border-bottom: 2px solid var(--accent); padding-bottom: 2px; }
+
+/* MAIN */
+main { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
+
+/* STATS CARDS */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 32px;
+}
+.stat-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+}
+.stat-card .label { font-size: 12px; color: var(--text2); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+.stat-card .value { font-family: 'Rajdhani', sans-serif; font-size: 32px; font-weight: 700; color: var(--accent); }
+.stat-card .sub { font-size: 12px; color: var(--text3); margin-top: 4px; }
+
+/* SECTION */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.section-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* FILTER BAR */
+.filter-bar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.filter-bar input, .filter-bar select {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  padding: 8px 12px;
+  font-size: 13px;
+  font-family: 'Noto Sans SC', sans-serif;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.filter-bar input:focus, .filter-bar select:focus { border-color: var(--accent); }
+.filter-bar input { width: 200px; }
+
+/* TABLE */
+.table-wrap {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  overflow-x: auto;
+}
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead { background: var(--bg3); }
+th {
+  padding: 12px 16px;
+  text-align: left;
+  color: var(--text2);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+}
+th:hover { color: var(--text); }
+th.sorted { color: var(--accent); }
+td {
+  padding: 11px 16px;
+  border-top: 1px solid var(--border);
+  white-space: nowrap;
+}
+tr:hover td { background: rgba(255,255,255,0.02); }
+.rank { color: var(--text3); font-family: 'Rajdhani', sans-serif; font-weight: 600; }
+.rank.top1 { color: var(--accent); }
+.rank.top2 { color: #c0c0c0; }
+.rank.top3 { color: #cd7f32; }
+.player-name { font-weight: 500; color: var(--text); }
+.kills { color: var(--text); font-family: 'Rajdhani', sans-serif; font-size: 15px; font-weight: 600; }
+.score { color: var(--accent); font-family: 'Rajdhani', sans-serif; font-size: 15px; font-weight: 700; }
+.kd-good { color: var(--green); }
+.kd-bad { color: var(--red); }
+.kd-neutral { color: var(--text2); }
+.side-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 500;
+}
+.side-atk { background: rgba(255,68,68,0.15); color: #ff6666; border: 1px solid rgba(255,68,68,0.3); }
+.side-def { background: rgba(88,166,255,0.15); color: #58a6ff; border: 1px solid rgba(88,166,255,0.3); }
+.squad-badge {
+  display: inline-block;
+  width: 22px; height: 22px;
+  border-radius: 4px;
+  text-align: center;
+  line-height: 22px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.sq-A { background: rgba(232,160,32,0.2); color: var(--accent); }
+.sq-B { background: rgba(57,211,83,0.2); color: var(--green); }
+.sq-C { background: rgba(88,166,255,0.2); color: var(--blue); }
+.sq-D { background: rgba(163,113,247,0.2); color: #a371f7; }
+.sq-E { background: rgba(240,192,64,0.2); color: var(--accent2); }
+
+/* MATCHES LIST */
+.matches-grid {
+  display: grid;
+  gap: 12px;
+}
+.match-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  text-decoration: none;
+  color: inherit;
+}
+.match-card:hover { border-color: var(--accent); background: rgba(232,160,32,0.03); }
+.match-meta { display: flex; align-items: center; gap: 16px; }
+.match-date { font-family: 'Rajdhani', sans-serif; font-size: 18px; font-weight: 600; color: var(--text); }
+.match-type { font-size: 12px; color: var(--text2); background: var(--bg3); padding: 3px 8px; border-radius: 4px; }
+.match-map { font-size: 13px; color: var(--text2); }
+.match-result { font-family: 'Rajdhani', sans-serif; font-size: 14px; font-weight: 600; letter-spacing: 1px; }
+.result-atk { color: var(--red); }
+.result-def { color: var(--blue); }
+.match-players { font-size: 12px; color: var(--text3); }
+
+/* TABS */
+.tabs { display: flex; gap: 0; margin-bottom: 24px; border-bottom: 1px solid var(--border); }
+.tab {
+  padding: 10px 20px;
+  font-size: 14px;
+  color: var(--text2);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+  margin-bottom: -1px;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--text); border-bottom-color: var(--accent); }
+
+/* LOADING */
+.loading { color: var(--text3); padding: 40px; text-align: center; font-size: 14px; }
+.empty { color: var(--text3); padding: 40px; text-align: center; font-size: 14px; }
+
+/* PLAYER DETAIL */
+.player-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  margin-bottom: 32px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 24px;
+}
+.player-avatar {
+  width: 64px; height: 64px;
+  border-radius: 8px;
+  background: var(--bg3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--accent);
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.player-info h2 { font-size: 22px; font-weight: 500; margin-bottom: 6px; }
+.player-info p { font-size: 13px; color: var(--text2); }
+.player-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .stats-row { grid-template-columns: repeat(2, 1fr); }
+  .player-stats-grid { grid-template-columns: repeat(3, 1fr); }
+  header { padding: 0 16px; }
+  main { padding: 16px; }
+}
+
+/* PAGE TRANSITIONS */
+.page { display: none; animation: fadeIn 0.2s ease; }
+.page.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+.btn {
+  background: var(--accent);
+  color: #000;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Noto Sans SC', sans-serif;
+  transition: background 0.2s;
+}
+.btn:hover { background: var(--accent2); }
+.btn-ghost {
+  background: transparent;
+  color: var(--text2);
+  border: 1px solid var(--border);
+}
+.btn-ghost:hover { color: var(--text); border-color: var(--text2); background: transparent; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">DELTA<span> · 战队数据</span></div>
+  <nav>
+    <a href="#" class="active" onclick="showPage('overview', this)">总览</a>
+    <a href="#" onclick="showPage('matches', this)">比赛记录</a>
+    <a href="#" onclick="showPage('players', this)">选手数据</a>
+    <a href="#" onclick="showPage('admin', this)" style="color:var(--accent)">管理后台</a>
+  </nav>
+</header>
+
+<main>
+
+  <!-- 总览页 -->
+  <div class="page active" id="page-overview">
+    <div class="stats-row" id="overview-cards">
+      <div class="stat-card"><div class="label">总比赛场数</div><div class="value" id="total-matches">—</div><div class="sub">所有记录</div></div>
+      <div class="stat-card"><div class="label">参与选手数</div><div class="value" id="total-players">—</div><div class="sub">有数据记录</div></div>
+      <div class="stat-card"><div class="label">总击杀数</div><div class="value" id="total-kills">—</div><div class="sub">全场累计</div></div>
+      <div class="stat-card"><div class="label">最高单场得分</div><div class="value" id="top-score">—</div><div class="sub" id="top-score-name">—</div></div>
+    </div>
+
+    <div class="section-header">
+      <div class="section-title">最近比赛</div>
+      <a href="#" onclick="showPage('matches', document.querySelector('nav a:nth-child(2)'))" style="font-size:13px;color:var(--text2);text-decoration:none;">查看全部 →</a>
+    </div>
+    <div class="matches-grid" id="recent-matches">
+      <div class="loading">加载中...</div>
+    </div>
+
+    <div style="margin-top:32px" class="section-header">
+      <div class="section-title">积分榜 TOP 10</div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>#</th>
+          <th>选手</th>
+          <th onclick="sortTable('leaderboard','avg_score')">场均得分 ↕</th>
+          <th onclick="sortTable('leaderboard','avg_kills')">场均击杀 ↕</th>
+          <th onclick="sortTable('leaderboard','kd')">K/D ↕</th>
+          <th>比赛场数</th>
+        </tr></thead>
+        <tbody id="leaderboard"><tr><td colspan="6" class="loading">加载中...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 比赛记录页 -->
+  <div class="page" id="page-matches">
+    <div class="section-header" style="margin-bottom:20px">
+      <div class="section-title">比赛记录</div>
+    </div>
+    <div class="filter-bar">
+      <select id="filter-match-type" onchange="loadMatches()">
+        <option value="">全部类型</option>
+        <option value="训练赛">训练赛</option>
+        <option value="正式赛">正式赛</option>
+      </select>
+    </div>
+    <div class="matches-grid" id="all-matches">
+      <div class="loading">加载中...</div>
+    </div>
+  </div>
+
+  <!-- 选手数据页 -->
+  <div class="page" id="page-players">
+    <div class="section-header" style="margin-bottom:20px">
+      <div class="section-title">选手数据</div>
+    </div>
+    <div class="filter-bar">
+      <input type="text" id="search-player" placeholder="搜索选手名..." oninput="filterPlayers()">
+      <select id="filter-match-for-player" onchange="loadPlayerStats()">
+        <option value="">全部比赛</option>
+      </select>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>#</th>
+          <th>选手</th>
+          <th>场次</th>
+          <th onclick="sortTable('player-table','total_kills')">总击杀 ↕</th>
+          <th onclick="sortTable('player-table','avg_kills')">场均击杀 ↕</th>
+          <th onclick="sortTable('player-table','kd')">K/D ↕</th>
+          <th onclick="sortTable('player-table','avg_score')">场均得分 ↕</th>
+          <th onclick="sortTable('player-table','total_assists')">总助攻 ↕</th>
+          <th onclick="sortTable('player-table','total_rescues')">总救援 ↕</th>
+        </tr></thead>
+        <tbody id="player-table"><tr><td colspan="9" class="loading">加载中...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 管理后台页 -->
+  <div class="page" id="page-admin">
+    <div style="max-width:680px">
+      <div class="section-title" style="margin-bottom:20px">管理后台</div>
+
+      <!-- 新建比赛 -->
+      <div class="table-wrap" style="padding:24px;margin-bottom:20px">
+        <div style="font-size:14px;font-weight:500;margin-bottom:16px">新建比赛场次</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+          <div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:6px">比赛日期</div>
+            <input type="date" id="new-match-date" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px 12px;font-size:13px;outline:none;">
+          </div>
+          <div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:6px">比赛类型</div>
+            <select id="new-match-type" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px 12px;font-size:13px;outline:none;">
+              <option>训练赛</option>
+              <option>正式赛</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:6px">地图名称</div>
+            <input type="text" id="new-match-map" placeholder="例：核电站" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px 12px;font-size:13px;outline:none;font-family:inherit;">
+          </div>
+          <div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:6px">结果</div>
+            <select id="new-match-result" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px 12px;font-size:13px;outline:none;">
+              <option>进攻胜</option>
+              <option>防守胜</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-bottom:12px">
+          <div style="font-size:12px;color:var(--text2);margin-bottom:6px">备注</div>
+          <input type="text" id="new-match-notes" placeholder="可选" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px 12px;font-size:13px;outline:none;font-family:inherit;">
+        </div>
+        <button class="btn" onclick="createMatch()">创建比赛</button>
+        <span id="match-msg" style="margin-left:12px;font-size:13px;color:var(--green)"></span>
+      </div>
+
+      <!-- 上传CSV -->
+      <div class="table-wrap" style="padding:24px">
+        <div style="font-size:14px;font-weight:500;margin-bottom:16px">上传比赛数据 CSV</div>
+
+        <div style="margin-bottom:12px">
+          <div style="font-size:12px;color:var(--text2);margin-bottom:6px">选择比赛场次</div>
+          <select id="csv-match-select" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px 12px;font-size:13px;outline:none;">
+            <option value="">-- 请先选择比赛 --</option>
+          </select>
+        </div>
+
+        <div style="margin-bottom:16px;padding:12px;background:var(--bg3);border-radius:6px;border:1px solid var(--border)">
+          <div style="font-size:12px;color:var(--text2);margin-bottom:8px">CSV 列名格式（第一行必须是这些列名）：</div>
+          <code style="font-size:11px;color:var(--accent);line-height:1.8">
+            player_name, side, squad, kills, deaths, assists, armor_break, vehicle_kills, rescues, squad_score, total_score
+          </code>
+          <div style="font-size:11px;color:var(--text3);margin-top:8px">side填写：进攻 或 防守 &nbsp;|&nbsp; squad填写：A/B/C/D/E</div>
+        </div>
+
+        <div id="drop-zone" style="border:2px dashed var(--border);border-radius:8px;padding:40px;text-align:center;cursor:pointer;transition:all 0.2s;margin-bottom:12px"
+          ondragover="event.preventDefault();this.style.borderColor='var(--accent)'"
+          ondragleave="this.style.borderColor='var(--border)'"
+          ondrop="handleDrop(event)"
+          onclick="document.getElementById('csv-file').click()">
+          <div style="font-size:32px;margin-bottom:8px">📄</div>
+          <div style="font-size:14px;color:var(--text2)">拖拽 CSV 文件到这里</div>
+          <div style="font-size:12px;color:var(--text3);margin-top:4px">或点击选择文件</div>
+          <input type="file" id="csv-file" accept=".csv" style="display:none" onchange="handleFile(this.files[0])">
+        </div>
+
+        <div id="csv-preview" style="display:none;margin-bottom:12px">
+          <div style="font-size:12px;color:var(--text2);margin-bottom:8px">预览（前5行）：</div>
+          <div class="table-wrap" style="max-height:200px;overflow-y:auto">
+            <table id="preview-table" style="font-size:12px"></table>
+          </div>
+          <div id="csv-count" style="font-size:12px;color:var(--text2);margin-top:8px"></div>
+        </div>
+
+        <button class="btn" id="upload-btn" onclick="uploadCSV()" disabled style="opacity:0.5">上传数据</button>
+        <span id="upload-msg" style="margin-left:12px;font-size:13px"></span>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ===== CONFIG =====
+const SUPABASE_URL = 'https://qdmoxisywywokbitbxbx.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_eukquWvS-hQUyT5myNIkMQ_LZlQrjCw';
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ===== NAVIGATION =====
+function showPage(name, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  if (el) el.classList.add('active');
+  if (name === 'overview') loadOverview();
+  if (name === 'matches') loadMatches();
+  if (name === 'players') loadPlayerStats();
+  if (name === 'admin') loadAdminData();
+}
+
+// ===== OVERVIEW =====
+async function loadOverview() {
+  const { data: matches } = await db.from('matches').select('*').order('match_date', { ascending: false });
+  const { data: stats } = await db.from('match_stats').select('*');
+
+  if (!matches || !stats) return;
+
+  // Cards
+  const players = [...new Set(stats.map(s => s.player_name))];
+  document.getElementById('total-matches').textContent = matches.length;
+  document.getElementById('total-players').textContent = players.length;
+  document.getElementById('total-kills').textContent = stats.reduce((a, b) => a + (b.kills || 0), 0).toLocaleString();
+
+  const top = stats.reduce((a, b) => (b.total_score || 0) > (a.total_score || 0) ? b : a, {});
+  document.getElementById('top-score').textContent = (top.total_score || 0).toLocaleString();
+  document.getElementById('top-score-name').textContent = top.player_name || '—';
+
+  // Recent matches
+  const recentEl = document.getElementById('recent-matches');
+  if (matches.length === 0) { recentEl.innerHTML = '<div class="empty">暂无比赛记录</div>'; return; }
+  recentEl.innerHTML = matches.slice(0, 5).map(m => matchCardHTML(m)).join('');
+
+  // Leaderboard
+  buildLeaderboard(stats, 'leaderboard', 10);
+}
+
+function matchCardHTML(m) {
+  return `<div class="match-card" onclick="viewMatch(${m.id})">
+    <div class="match-meta">
+      <div class="match-date">${m.match_date}</div>
+      <div class="match-type">${m.match_type}</div>
+      <div class="match-map">${m.map_name || ''}</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:16px">
+      <div class="match-result ${m.result === '进攻胜' ? 'result-atk' : 'result-def'}">${m.result || '—'}</div>
+      <div style="font-size:12px;color:var(--text3)">→</div>
+    </div>
+  </div>`;
+}
+
+function buildLeaderboard(stats, tableId, limit) {
+  const grouped = {};
+  stats.forEach(s => {
+    if (!grouped[s.player_name]) grouped[s.player_name] = { kills: 0, deaths: 0, score: 0, games: 0 };
+    grouped[s.player_name].kills += s.kills || 0;
+    grouped[s.player_name].deaths += s.deaths || 0;
+    grouped[s.player_name].score += s.total_score || 0;
+    grouped[s.player_name].games += 1;
+  });
+
+  let rows = Object.entries(grouped).map(([name, d]) => ({
+    name,
+    games: d.games,
+    total_kills: d.kills,
+    avg_kills: (d.kills / d.games).toFixed(1),
+    kd: d.deaths === 0 ? d.kills.toFixed(1) : (d.kills / d.deaths).toFixed(2),
+    avg_score: Math.round(d.score / d.games),
+    total_assists: 0
+  })).sort((a, b) => b.avg_score - a.avg_score);
+
+  if (limit) rows = rows.slice(0, limit);
+
+  document.getElementById(tableId).innerHTML = rows.map((r, i) => `
+    <tr>
+      <td class="rank ${i === 0 ? 'top1' : i === 1 ? 'top2' : i === 2 ? 'top3' : ''}">${i + 1}</td>
+      <td class="player-name">${r.name}</td>
+      <td class="score">${r.avg_score.toLocaleString()}</td>
+      <td class="kills">${r.avg_kills}</td>
+      <td class="${parseFloat(r.kd) >= 2 ? 'kd-good' : parseFloat(r.kd) >= 1 ? 'kd-neutral' : 'kd-bad'}">${r.kd}</td>
+      <td style="color:var(--text2)">${r.games}</td>
+    </tr>`).join('') || '<tr><td colspan="6" class="empty">暂无数据</td></tr>';
+}
+
+// ===== MATCHES =====
+async function loadMatches() {
+  const type = document.getElementById('filter-match-type').value;
+  let query = db.from('matches').select('*').order('match_date', { ascending: false });
+  if (type) query = query.eq('match_type', type);
+  const { data: matches } = await query;
+
+  const el = document.getElementById('all-matches');
+  if (!matches || matches.length === 0) { el.innerHTML = '<div class="empty">暂无比赛记录</div>'; return; }
+  el.innerHTML = matches.map(m => matchCardHTML(m)).join('');
+}
+
+async function viewMatch(matchId) {
+  const { data: stats } = await db.from('match_stats').select('*').eq('match_id', matchId).order('total_score', { ascending: false });
+  const { data: match } = await db.from('matches').select('*').eq('id', matchId).single();
+  if (!stats || !match) return;
+
+  const el = document.getElementById('all-matches');
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <button class="btn btn-ghost" onclick="loadMatches()">← 返回列表</button>
+      <div style="font-size:16px;font-weight:500">${match.match_date} · ${match.match_type} · ${match.map_name || ''}</div>
+      <div class="match-result ${match.result === '进攻胜' ? 'result-atk' : 'result-def'}">${match.result || ''}</div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>#</th><th>选手</th><th>阵营</th><th>分队</th>
+          <th>击杀</th><th>死亡</th><th>助攻</th><th>破甲</th><th>载具击杀</th><th>救援</th><th>得分</th>
+        </tr></thead>
+        <tbody>
+          ${stats.map((s, i) => `<tr>
+            <td class="rank ${i===0?'top1':i===1?'top2':i===2?'top3':''}">${i+1}</td>
+            <td class="player-name">${s.player_name}</td>
+            <td><span class="side-badge ${s.side==='进攻'?'side-atk':'side-def'}">${s.side||'—'}</span></td>
+            <td><span class="squad-badge sq-${s.squad}">${s.squad||'—'}</span></td>
+            <td class="kills">${s.kills||0}</td>
+            <td style="color:var(--text2)">${s.deaths||0}</td>
+            <td style="color:var(--text2)">${s.assists||0}</td>
+            <td style="color:var(--text2)">${s.armor_break||0}</td>
+            <td style="color:var(--text2)">${s.vehicle_kills||0}</td>
+            <td style="color:var(--text2)">${s.rescues||0}</td>
+            <td class="score">${(s.total_score||0).toLocaleString()}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+// ===== PLAYERS =====
+let allPlayerRows = [];
+async function loadPlayerStats() {
+  const matchId = document.getElementById('filter-match-for-player').value;
+
+  // load matches into select
+  const { data: matches } = await db.from('matches').select('*').order('match_date', { ascending: false });
+  const sel = document.getElementById('filter-match-for-player');
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">全部比赛</option>' +
+    (matches || []).map(m => `<option value="${m.id}" ${m.id == prev ? 'selected' : ''}>${m.match_date} ${m.match_type}</option>`).join('');
+
+  let query = db.from('match_stats').select('*');
+  if (matchId) query = query.eq('match_id', matchId);
+  const { data: stats } = await query;
+  if (!stats) return;
+
+  const grouped = {};
+  stats.forEach(s => {
+    if (!grouped[s.player_name]) grouped[s.player_name] = { kills: 0, deaths: 0, assists: 0, rescues: 0, score: 0, games: new Set() };
+    grouped[s.player_name].kills += s.kills || 0;
+    grouped[s.player_name].deaths += s.deaths || 0;
+    grouped[s.player_name].assists += s.assists || 0;
+    grouped[s.player_name].rescues += s.rescues || 0;
+    grouped[s.player_name].score += s.total_score || 0;
+    grouped[s.player_name].games.add(s.match_id);
+  });
+
+  allPlayerRows = Object.entries(grouped).map(([name, d]) => ({
+    name,
+    games: d.games.size,
+    total_kills: d.kills,
+    avg_kills: (d.kills / d.games.size).toFixed(1),
+    kd: d.deaths === 0 ? d.kills.toFixed(1) : (d.kills / d.deaths).toFixed(2),
+    avg_score: Math.round(d.score / d.games.size),
+    total_assists: d.assists,
+    total_rescues: d.rescues
+  })).sort((a, b) => b.avg_score - a.avg_score);
+
+  renderPlayerTable(allPlayerRows);
+}
+
+function renderPlayerTable(rows) {
+  document.getElementById('player-table').innerHTML = rows.map((r, i) => `
+    <tr>
+      <td class="rank ${i===0?'top1':i===1?'top2':i===2?'top3':''}">${i+1}</td>
+      <td class="player-name">${r.name}</td>
+      <td style="color:var(--text2)">${r.games}</td>
+      <td class="kills">${r.total_kills}</td>
+      <td class="kills">${r.avg_kills}</td>
+      <td class="${parseFloat(r.kd)>=2?'kd-good':parseFloat(r.kd)>=1?'kd-neutral':'kd-bad'}">${r.kd}</td>
+      <td class="score">${r.avg_score.toLocaleString()}</td>
+      <td style="color:var(--text2)">${r.total_assists}</td>
+      <td style="color:var(--text2)">${r.total_rescues}</td>
+    </tr>`).join('') || '<tr><td colspan="9" class="empty">暂无数据</td></tr>';
+}
+
+function filterPlayers() {
+  const q = document.getElementById('search-player').value.toLowerCase();
+  renderPlayerTable(allPlayerRows.filter(r => r.name.toLowerCase().includes(q)));
+}
+
+// ===== ADMIN =====
+async function loadAdminData() {
+  const { data: matches } = await db.from('matches').select('*').order('match_date', { ascending: false });
+  const sel = document.getElementById('csv-match-select');
+  sel.innerHTML = '<option value="">-- 请先选择比赛 --</option>' +
+    (matches || []).map(m => `<option value="${m.id}">${m.match_date} · ${m.match_type} · ${m.map_name || ''}</option>`).join('');
+}
+
+async function createMatch() {
+  const date = document.getElementById('new-match-date').value;
+  const type = document.getElementById('new-match-type').value;
+  const map = document.getElementById('new-match-map').value;
+  const result = document.getElementById('new-match-result').value;
+  const notes = document.getElementById('new-match-notes').value;
+
+  if (!date) { document.getElementById('match-msg').textContent = '请填写日期'; document.getElementById('match-msg').style.color = 'var(--red)'; return; }
+
+  const { error } = await db.from('matches').insert({ match_date: date, match_type: type, map_name: map, result, notes });
+  const msg = document.getElementById('match-msg');
+  if (error) { msg.textContent = '创建失败：' + error.message; msg.style.color = 'var(--red)'; }
+  else { msg.textContent = '✓ 创建成功'; msg.style.color = 'var(--green)'; loadAdminData(); setTimeout(() => msg.textContent = '', 3000); }
+}
+
+// ===== CSV UPLOAD =====
+let csvData = [];
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('drop-zone').style.borderColor = 'var(--border)';
+  const file = e.dataTransfer.files[0];
+  if (file) handleFile(file);
+}
+
+function handleFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const text = e.target.result;
+    parseCSV(text);
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+function parseCSV(text) {
+  const lines = text.trim().split('\n').map(l => l.trim()).filter(l => l);
+  if (lines.length < 2) return;
+
+  const headers = lines[0].split(',').map(h => h.trim());
+  csvData = lines.slice(1).map(line => {
+    const vals = line.split(',').map(v => v.trim());
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = vals[i] || '');
+    return obj;
+  });
+
+  // Preview
+  const previewTable = document.getElementById('preview-table');
+  previewTable.innerHTML = `<thead><tr>${headers.map(h => `<th style="padding:6px 10px;color:var(--text2)">${h}</th>`).join('')}</tr></thead>
+    <tbody>${csvData.slice(0, 5).map(row => `<tr>${headers.map(h => `<td style="padding:6px 10px">${row[h]}</td>`).join('')}</tr>`).join('')}</tbody>`;
+
+  document.getElementById('csv-count').textContent = `共 ${csvData.length} 行数据`;
+  document.getElementById('csv-preview').style.display = 'block';
+  document.getElementById('upload-btn').disabled = false;
+  document.getElementById('upload-btn').style.opacity = '1';
+}
+
+async function uploadCSV() {
+  const matchId = document.getElementById('csv-match-select').value;
+  const msg = document.getElementById('upload-msg');
+  if (!matchId) { msg.textContent = '请先选择比赛场次'; msg.style.color = 'var(--red)'; return; }
+  if (csvData.length === 0) { msg.textContent = '没有数据'; msg.style.color = 'var(--red)'; return; }
+
+  msg.textContent = '上传中...'; msg.style.color = 'var(--text2)';
+  document.getElementById('upload-btn').disabled = true;
+
+  const rows = csvData.map(r => ({
+    match_id: parseInt(matchId),
+    player_name: r.player_name || r['选手名'] || r['name'] || '',
+    side: r.side || r['阵营'] || '',
+    squad: r.squad || r['分队'] || '',
+    kills: parseInt(r.kills || r['击杀'] || 0) || 0,
+    deaths: parseInt(r.deaths || r['死亡'] || 0) || 0,
+    assists: parseInt(r.assists || r['助攻'] || 0) || 0,
+    armor_break: parseInt(r.armor_break || r['破甲'] || 0) || 0,
+    vehicle_kills: parseInt(r.vehicle_kills || r['载具击杀'] || 0) || 0,
+    rescues: parseInt(r.rescues || r['救援'] || 0) || 0,
+    squad_score: parseInt(r.squad_score || r['分队贡献'] || 0) || 0,
+    total_score: parseInt(r.total_score || r['总评分'] || r['得分'] || 0) || 0,
+  })).filter(r => r.player_name);
+
+  const { error } = await db.from('match_stats').insert(rows);
+  document.getElementById('upload-btn').disabled = false;
+  document.getElementById('upload-btn').style.opacity = '1';
+
+  if (error) { msg.textContent = '上传失败：' + error.message; msg.style.color = 'var(--red)'; }
+  else {
+    msg.textContent = `✓ 成功上传 ${rows.length} 条数据`;
+    msg.style.color = 'var(--green)';
+    csvData = [];
+    document.getElementById('csv-preview').style.display = 'none';
+    setTimeout(() => msg.textContent = '', 4000);
+  }
+}
+
+// ===== INIT =====
+loadOverview();
+</script>
+</body>
+</html>
