@@ -949,9 +949,17 @@ async function viewMatch(matchId) {
 
   if (!match) return;
 
-  // Build roster lookup
+  // Build roster lookup（模糊匹配竖线格式）
+  function normName(n) {
+    return (n||'').replace(/\s*[|｜丨∣]\s*/g, '|').replace(/\s+/g, ' ').trim().toLowerCase();
+  }
   const rosterMap = {};
-  (rosterData||[]).forEach(p => { rosterMap[p.name] = p; });
+  const rosterNormMap2 = {};
+  (rosterData||[]).forEach(p => {
+    rosterMap[p.name] = p;
+    rosterNormMap2[normName(p.name)] = p;
+  });
+  function getRosterByName(name) { return rosterMap[name] || rosterNormMap2[normName(name)] || {}; }
 
   // Get unique teams from stats
   const teams = [...new Set((stats||[]).map(s => s.team_name).filter(Boolean))];
@@ -1105,7 +1113,7 @@ function renderTeamTable(stats, rosterMap) {
 
 function renderFullTable(stats, rosterMap) {
   const rows = stats.map((s, i) => {
-    const r = rosterMap[s.player_name] || {};
+    const r = getRosterByName(s.player_name);
     const isVehicle = r.player_type === 'vehicle';
     const isCaptain = r.is_captain;
     const kdVal = kd(s.kills||0, s.deaths||0);
@@ -1145,7 +1153,7 @@ function renderFullTable(stats, rosterMap) {
 function renderUnitTable(stats, rosterMap, label, type, showExtra) {
   if (!stats.length) return '';
   const rows = stats.map((s, i) => {
-    const r = rosterMap[s.player_name] || {};
+    const r = getRosterByName(s.player_name);
     const isCaptain = r.is_captain;
     const kdVal = kd(s.kills||0, s.deaths||0);
     const kdaVal = kda(s.kills||0, s.deaths||0, s.assists||0);
@@ -1221,7 +1229,15 @@ async function loadPlayerStats() {
   const { data: roster } = await db.from('players').select('*');
 
   const rosterMap = {};
-  (roster||[]).forEach(p => { rosterMap[p.name] = p; });
+  const rosterNormMap3 = {};
+  (roster||[]).forEach(p => {
+    rosterMap[p.name] = p;
+    rosterNormMap3[normName2(p.name)] = p;
+  });
+  function normName2(n) {
+    return (n||'').replace(/\s*[|｜丨∣]\s*/g, '|').replace(/\s+/g, ' ').trim().toLowerCase();
+  }
+  function getRoster2(name) { return rosterMap[name] || rosterNormMap3[normName2(name)] || {}; }
 
   if (!stats) return;
   const grouped = {};
@@ -1243,7 +1259,7 @@ async function loadPlayerStats() {
     kd_val: kd(d.kills, d.deaths),
     kda_val: kda(d.kills, d.deaths, d.assists),
     total_rescues: d.rescues,
-    player_type: (rosterMap[name] || {}).player_type || 'infantry'
+    player_type: getRoster2(name).player_type || 'infantry'
   })).sort((a,b) => parseFloat(b.kd_val) - parseFloat(a.kd_val));
 
   // Set heads
@@ -1473,8 +1489,12 @@ async function uploadCSV() {
   })).filter(r => r.name);
 
   const { data: rosterCheck } = await db.from('players').select('name');
-  const knownNames = new Set((rosterCheck||[]).map(p => p.name));
-  const unknownPlayers = parsed_check.map(r => r.name).filter(n => !knownNames.has(n));
+  // 标准化名字：统一竖线格式、去除多余空格
+  function normName(n) {
+    return (n||'').replace(/\s*[|｜丨∣]\s*/g, '|').replace(/\s+/g, ' ').trim().toLowerCase();
+  }
+  const knownNorms = new Set((rosterCheck||[]).map(p => normName(p.name)));
+  const unknownPlayers = parsed_check.map(r => r.name).filter(n => !knownNorms.has(normName(n)));
 
   if (unknownPlayers.length > 0) {
     const confirmMsg = `以下 ${unknownPlayers.length} 位选手不在选手库中：\n\n${unknownPlayers.join('\n')}\n\n是否继续上传？\n（建议先去选手库添加这些选手，否则步战/载具类型无法识别）`;
@@ -1505,10 +1525,15 @@ async function uploadCSV() {
   const totalKills = parsed.reduce((s, r) => s + r.kills, 0);
   const totalRescues = parsed.reduce((s, r) => s + r.rescues, 0);
 
-  // 从选手库获取步战/载具标签
+  // 从选手库获取步战/载具标签（模糊匹配竖线格式）
   const { data: roster } = await db.from('players').select('*');
   const rosterMap = {};
-  (roster||[]).forEach(p => { rosterMap[p.name] = p; });
+  const rosterNormMap = {};
+  (roster||[]).forEach(p => {
+    rosterMap[p.name] = p;
+    rosterNormMap[normName(p.name)] = p;
+  });
+  function getRoster(name) { return rosterMap[name] || rosterNormMap[normName(name)] || {}; }
 
   // 计算步战队总击杀（用于占步战击杀%）
   const infantryKills = parsed
@@ -1516,7 +1541,7 @@ async function uploadCSV() {
     .reduce((s, r) => s + r.kills, 0);
 
   const rows = parsed.map(r => {
-    const rInfo = rosterMap[r.name] || {};
+    const rInfo = getRoster(r.name);
     const isVehicle = rInfo.player_type === 'vehicle';
     return {
       match_id: parseInt(matchId),
