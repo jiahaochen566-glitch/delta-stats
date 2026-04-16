@@ -1022,7 +1022,6 @@ async function viewMatch(matchId) {
   `;
 
   window._matchStats = stats || [];
-  window._rosterMap = rosterMap;
   window._matchTeam1 = team1;
   window._matchTeam2 = team2;
   renderMatchDetail('all');
@@ -1036,11 +1035,10 @@ function switchMatchTeam(team, el) {
 
 function renderMatchDetail(team) {
   let stats = window._matchStats;
-  const rosterMap = window._rosterMap;
   const team1 = window._matchTeam1;
 
   if (team === 'teamtable') {
-    document.getElementById('match-detail-body').innerHTML = renderTeamTable(stats, rosterMap);
+    document.getElementById('match-detail-body').innerHTML = renderTeamTable(stats);
     return;
   }
 
@@ -1065,16 +1063,16 @@ function renderMatchDetail(team) {
   let html = '';
 
   if (isTeamView) {
-    html += renderUnitTable(infantry, rosterMap, '步战队', 'infantry', true);
-    html += renderUnitTable(vehicle, rosterMap, '载具队 ★', 'vehicle', true);
+    html += renderUnitTable(infantry, '步战队', 'infantry', true);
+    html += renderUnitTable(vehicle, '载具队 ★', 'vehicle', true);
   } else {
-    html += renderFullTable(stats, rosterMap);
+    html += renderFullTable(stats);
   }
 
   document.getElementById('match-detail-body').innerHTML = html;
 }
 
-function renderTeamTable(stats, rosterMap) {
+function renderTeamTable(stats) {
   // 按战队分组
   const teams = {};
   stats.forEach(s => {
@@ -1131,7 +1129,7 @@ function renderTeamTable(stats, rosterMap) {
   }).join('');
 }
 
-function renderFullTable(stats, rosterMap) {
+function renderFullTable(stats) {
   const rows = stats.map((s, i) => {
     const r = getRosterByName(s.player_name);
     const isVehicle = r.player_type === 'vehicle';
@@ -1170,7 +1168,7 @@ function renderFullTable(stats, rosterMap) {
   </div>`;
 }
 
-function renderUnitTable(stats, rosterMap, label, type, showExtra) {
+function renderUnitTable(stats, label, type, showExtra) {
   if (!stats.length) return '';
   const rows = stats.map((s, i) => {
     const r = getRosterByName(s.player_name);
@@ -1492,15 +1490,52 @@ async function uploadCSV() {
   if (!teamName) { msg.textContent = '请填写战队名称'; msg.style.color = 'var(--red)'; return; }
   if (!csvData.length) { msg.textContent = '没有数据'; msg.style.color = 'var(--red)'; return; }
 
-  // 先把这批数据解析出来，检测未知选手
+  // 先把这批数据解析出来，检测未知选手和大小写重复
   const parsed_check = csvData.map(r => ({
     name: r.player_name || r['选手名'] || r['ID'] || r['id'] || '',
   })).filter(r => r.name);
 
   const { data: rosterCheck } = await db.from('players').select('name');
-  const knownNorms = new Set((rosterCheck||[]).map(p => normName(p.name)));
-  const unknownPlayers = parsed_check.map(r => r.name).filter(n => !knownNorms.has(normName(n)));
+  const knownNames = (rosterCheck||[]).map(p => p.name);
+  const knownNorms = new Set(knownNames.map(n => normName(n)));
 
+  // 检测：CSV里的名字和选手库里normName相同但写法不同（大小写/竖线差异）
+  const nameMap = {}; // normName -> 选手库里的标准名字
+  knownNames.forEach(n => { nameMap[normName(n)] = n; });
+
+  // 找出需要统一的名字
+  const toUnify = [];
+  const csvNames = parsed_check.map(r => r.name);
+  csvNames.forEach(csvName => {
+    const norm = normName(csvName);
+    if (nameMap[norm] && nameMap[norm] !== csvName) {
+      toUnify.push({ csv: csvName, standard: nameMap[norm] });
+    }
+  });
+
+  // 如果有大小写/格式不一致的，弹框让用户选
+  if (toUnify.length > 0) {
+    const lines = toUnify.map(t => `CSV中: "${t.csv}"  →  选手库中: "${t.standard}"`).join('\n');
+    const confirmMsg = `发现 ${toUnify.length} 个选手名字写法不一致：\n\n${lines}\n\n点"确定"自动统一为选手库中的写法，点"取消"保留CSV原始写法。`;
+    if (confirm(confirmMsg)) {
+      // 自动替换为选手库里的标准名字
+      toUnify.forEach(t => {
+        csvData = csvData.map(r => {
+          const n = r.player_name || r['选手名'] || r['ID'] || r['id'] || '';
+          if (n === t.csv) {
+            if (r.player_name !== undefined) r.player_name = t.standard;
+            else if (r['选手名'] !== undefined) r['选手名'] = t.standard;
+            else if (r['ID'] !== undefined) r['ID'] = t.standard;
+            else r['id'] = t.standard;
+          }
+          return r;
+        });
+      });
+    }
+  }
+
+  // 检测不在选手库的选手
+  const unknownPlayers = parsed_check.map(r => r.name).filter(n => !knownNorms.has(normName(n)));
   if (unknownPlayers.length > 0) {
     const confirmMsg = `以下 ${unknownPlayers.length} 位选手不在选手库中：\n\n${unknownPlayers.join('\n')}\n\n是否继续上传？\n（建议先去选手库添加这些选手，否则步战/载具类型无法识别）`;
     if (!confirm(confirmMsg)) {
