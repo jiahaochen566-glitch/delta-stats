@@ -734,6 +734,24 @@ tr:hover td { background: rgba(255,255,255,0.02); }
               <option value="">-- 请先选择比赛 --</option>
             </select>
           </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>这份CSV是哪个战队</label>
+              <select id="csv-team-select">
+                <option value="情久">情久</option>
+                <option value="奇迹">奇迹</option>
+                <option value="custom">其他（自填）</option>
+              </select>
+            </div>
+            <div class="form-group" id="csv-team-custom-group" style="display:none">
+              <label>战队名称</label>
+              <input type="text" id="csv-team-custom" placeholder="输入战队名">
+            </div>
+          </div>
+          <div style="font-size:12px;color:var(--text2);margin-bottom:12px;padding:10px;background:var(--bg3);border-radius:6px;border-left:3px solid var(--accent2)">
+            CSV格式：<span style="color:var(--white);font-family:monospace">player_name, side, kills, deaths, assists, rescues, vehicle_kills, occupy_score, total_score</span><br>
+            <span style="color:var(--text3);margin-top:4px;display:block">KD / KDA / 击杀参与率 / 救援贡献率 自动计算，无需填写</span>
+          </div>
           <div class="drop-zone" id="drop-zone"
             ondrop="handleDrop(event)"
             ondragover="event.preventDefault();this.classList.add('drag-over')"
@@ -741,7 +759,7 @@ tr:hover td { background: rgba(255,255,255,0.02); }
             onclick="document.getElementById('csv-file').click()">
             <div class="drop-zone-icon">📂</div>
             <div class="drop-zone-text">拖拽 CSV 文件到此处，或点击选择</div>
-            <div class="drop-zone-sub">支持中英文列名，分数不含逗号</div>
+            <div class="drop-zone-sub">每次上传一个战队的20人数据，可上传两次合成完整场次</div>
           </div>
           <input type="file" id="csv-file" accept=".csv" style="display:none" onchange="handleFile(this.files[0])">
           <div id="csv-preview" style="display:none;margin-bottom:12px">
@@ -1005,7 +1023,7 @@ function renderFullTable(stats, rosterMap) {
       <td class="rank ${i===0?'top1':i===1?'top2':i===2?'top3':''}">${i+1}</td>
       <td>${isCaptain?'<span class="captain-icon">★</span>':''}</td>
       <td class="player-name">${isVehicle?'<span class="vehicle-icon">🚗</span>':''}${s.player_name}</td>
-      <td><span class="squad-badge sq-${s.squad||'A'}">${s.squad||'—'}</span></td>
+      <td style="font-size:12px;color:var(--text2)">${s.team_name||'—'}</td>
       <td><span class="side-badge ${s.side==='进攻'?'side-atk':'side-def'}">${s.side||'—'}</span></td>
       <td class="kills">${s.kills||0}</td>
       <td class="stat-num">${s.deaths||0}</td>
@@ -1024,7 +1042,7 @@ function renderFullTable(stats, rosterMap) {
   return `<div class="table-wrap">
     <table>
       <thead><tr>
-        <th>#</th><th>★</th><th>选手</th><th>小队</th><th>阵营</th>
+        <th>#</th><th>★</th><th>选手</th><th>战队</th><th>阵营</th>
         <th>击杀</th><th>死亡</th><th>助攻</th><th>救援</th><th>载具击杀</th><th>占点分</th>
         <th>分数</th><th>KD</th><th>综合KDA</th><th>击杀参与率</th><th>救援贡献率</th>
       </tr></thead>
@@ -1049,7 +1067,6 @@ function renderUnitTable(stats, rosterMap, label, type, showExtra) {
       <td class="rank ${i===0?'top1':i===1?'top2':i===2?'top3':''}">${i+1}</td>
       <td>${isCaptain?'<span class="captain-icon">★</span>':''}</td>
       <td class="player-name">${s.player_name}</td>
-      <td><span class="squad-badge sq-${s.squad||'A'}">${s.squad||'—'}</span></td>
       <td><span class="side-badge ${s.side==='进攻'?'side-atk':'side-def'}">${s.side||'—'}</span></td>
       <td class="kills">${s.kills||0}</td>
       <td class="stat-num">${s.deaths||0}</td>
@@ -1076,7 +1093,7 @@ function renderUnitTable(stats, rosterMap, label, type, showExtra) {
       <div class="unit-label ${type}">— ${label} —</div>
       <table>
         <thead><tr>
-          <th>#</th><th>★</th><th>选手</th><th>小队</th><th>阵营</th>
+          <th>#</th><th>★</th><th>选手</th><th>阵营</th>
           <th>击杀</th><th>死亡</th><th>助攻</th><th>救援</th><th>载具击杀</th><th>占点分</th>
           <th>分数</th><th>KD</th><th>综合KDA</th><th>击杀参与率</th><th>救援贡献率</th>
           ${extraHeaders}
@@ -1301,6 +1318,15 @@ async function deleteMatch() {
 
 // ===== CSV =====
 let csvData = [];
+
+// 战队选择切换
+document.addEventListener('DOMContentLoaded', () => {
+  const sel = document.getElementById('csv-team-select');
+  if (sel) sel.addEventListener('change', function() {
+    document.getElementById('csv-team-custom-group').style.display = this.value === 'custom' ? '' : 'none';
+  });
+});
+
 function handleDrop(e) {
   e.preventDefault();
   document.getElementById('drop-zone').classList.remove('drag-over');
@@ -1334,52 +1360,78 @@ function parseCSV(text) {
 
 async function uploadCSV() {
   const matchId = document.getElementById('csv-match-select').value;
+  const teamSel = document.getElementById('csv-team-select').value;
+  const teamName = teamSel === 'custom'
+    ? document.getElementById('csv-team-custom').value.trim()
+    : teamSel;
   const msg = document.getElementById('upload-msg');
+
   if (!matchId) { msg.textContent = '请先选择比赛场次'; msg.style.color = 'var(--red)'; return; }
+  if (!teamName) { msg.textContent = '请填写战队名称'; msg.style.color = 'var(--red)'; return; }
   if (!csvData.length) { msg.textContent = '没有数据'; msg.style.color = 'var(--red)'; return; }
 
   msg.textContent = '上传中...'; msg.style.color = 'var(--text2)';
   document.getElementById('upload-btn').disabled = true;
 
-  // Get match info for team names
-  const { data: match } = await db.from('matches').select('*').eq('id', matchId).single();
+  // 先把这批数据解析出来
+  const parsed = csvData.map(r => ({
+    name: r.player_name || r['选手名'] || r['ID'] || r['id'] || '',
+    side: r.side || r['阵营'] || '',
+    kills: parseInt(r.kills || r['击杀'] || 0) || 0,
+    deaths: parseInt(r.deaths || r['死亡'] || 0) || 0,
+    assists: parseInt(r.assists || r['助攻'] || 0) || 0,
+    rescues: parseInt(r.rescues || r['救援'] || r['救人'] || 0) || 0,
+    vehicle_kills: parseInt(r.vehicle_kills || r['载具分'] || 0) || 0,
+    occupy_score: parseInt(r.occupy_score || r['占点分'] || 0) || 0,
+    total_score: parseInt(r.total_score || r['分数'] || r['得分'] || 0) || 0,
+  })).filter(r => r.name);
+
+  // 自动计算击杀参与率、救援贡献率
+  const totalKills = parsed.reduce((s, r) => s + r.kills, 0);
+  const totalRescues = parsed.reduce((s, r) => s + r.rescues, 0);
+
+  // 从选手库获取步战/载具标签
   const { data: roster } = await db.from('players').select('*');
   const rosterMap = {};
   (roster||[]).forEach(p => { rosterMap[p.name] = p; });
 
-  const rows = csvData.map(r => {
-    const name = r.player_name || r['选手名'] || r['ID'] || r['id'] || '';
-    const rInfo = rosterMap[name] || {};
+  // 计算步战队总击杀（用于占步战击杀%）
+  const infantryKills = parsed
+    .filter(r => (rosterMap[r.name] || {}).player_type !== 'vehicle')
+    .reduce((s, r) => s + r.kills, 0);
+
+  const rows = parsed.map(r => {
+    const rInfo = rosterMap[r.name] || {};
+    const isVehicle = rInfo.player_type === 'vehicle';
     return {
       match_id: parseInt(matchId),
-      player_name: name,
-      team_name: r.team_name || r['战队'] || '',
-      side: r.side || r['阵营'] || '',
-      squad: r.squad || r['小队'] || r['分队'] || '',
-      kills: parseInt(r.kills || r['击杀'] || 0) || 0,
-      deaths: parseInt(r.deaths || r['死亡'] || 0) || 0,
-      assists: parseInt(r.assists || r['助攻'] || 0) || 0,
-      rescues: parseInt(r.rescues || r['救援'] || r['救人'] || 0) || 0,
-      vehicle_kills: parseInt(r.vehicle_kills || r['载具分'] || 0) || 0,
-      occupy_score: parseInt(r.occupy_score || r['占点分'] || 0) || 0,
-      total_score: parseInt(r.total_score || r['分数'] || r['得分'] || 0) || 0,
-      deploy: parseInt(r.deploy || r['部署'] || 0) || 0,
-      kill_participation: r.kill_participation ? parseFloat(r.kill_participation) : null,
-      rescue_contribution: r.rescue_contribution ? parseFloat(r.rescue_contribution) : null,
-      infantry_kill_pct: r.infantry_kill_pct ? parseFloat(r.infantry_kill_pct) : null,
-      infantry_vehicle_score: parseInt(r.infantry_vehicle_score || 0) || 0,
+      player_name: r.name,
+      team_name: teamName,
+      side: r.side,
+      kills: r.kills,
+      deaths: r.deaths,
+      assists: r.assists,
+      rescues: r.rescues,
+      vehicle_kills: r.vehicle_kills,
+      occupy_score: r.occupy_score,
+      total_score: r.total_score,
+      kill_participation: totalKills > 0 ? r.kills / totalKills : null,
+      rescue_contribution: totalRescues > 0 ? r.rescues / totalRescues : null,
+      infantry_kill_pct: (!isVehicle && infantryKills > 0) ? r.kills / infantryKills : null,
+      infantry_vehicle_score: !isVehicle ? r.vehicle_kills : 0,
     };
-  }).filter(r => r.player_name);
+  });
 
   const { error } = await db.from('match_stats').insert(rows);
   document.getElementById('upload-btn').disabled = false;
   document.getElementById('upload-btn').style.opacity = '1';
   if (error) { msg.textContent = '上传失败：' + error.message; msg.style.color = 'var(--red)'; }
   else {
-    msg.textContent = `✓ 成功上传 ${rows.length} 条数据`;
+    msg.textContent = `✓ 成功上传 ${rows.length} 条（${teamName}）`;
     msg.style.color = 'var(--green)';
     csvData = [];
     document.getElementById('csv-preview').style.display = 'none';
+    document.getElementById('csv-file').value = '';
     setTimeout(() => msg.textContent = '', 4000);
   }
 }
