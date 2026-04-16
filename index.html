@@ -837,6 +837,11 @@ function normName(n) {
   return (n||'').replace(/\s*[|｜丨∣]\s*/g, '|').replace(/\s+/g, ' ').trim().toLowerCase();
 }
 
+// 标准化名字：统一竖线为 " | " 格式
+function stdName(n) {
+  return (n||'').replace(/\s*[|｜丨∣]\s*/g, ' | ').trim();
+}
+
 async function refreshRosterCache() {
   const { data: roster } = await db.from('players').select('*');
   globalRosterMap = {};
@@ -1381,7 +1386,7 @@ async function addPlayer() {
   const captain = document.getElementById('new-player-captain').value === 'true';
   const msg = document.getElementById('roster-msg');
   if (!name) { msg.textContent = '请填写游戏ID'; msg.style.color = 'var(--red)'; return; }
-  const { error } = await db.from('players').insert({ name, team, player_type: type, is_captain: captain });
+  const { error } = await db.from('players').insert({ name: stdName(name), team, player_type: type, is_captain: captain });
   if (error) { msg.textContent = '添加失败：' + error.message; msg.style.color = 'var(--red)'; }
   else { msg.textContent = '✓ 添加成功'; msg.style.color = 'var(--green)'; loadRoster(); setTimeout(() => msg.textContent = '', 3000); }
 }
@@ -1510,7 +1515,7 @@ async function uploadCSV() {
 
   // 先把这批数据解析出来
   const parsed = csvData.map(r => ({
-    name: r.player_name || r['选手名'] || r['ID'] || r['id'] || '',
+    name: stdName(r.player_name || r['选手名'] || r['ID'] || r['id'] || ''),
     side: r.side || r['阵营'] || '',
     kills: parseInt(r.kills || r['击杀'] || 0) || 0,
     deaths: parseInt(r.deaths || r['死亡'] || 0) || 0,
