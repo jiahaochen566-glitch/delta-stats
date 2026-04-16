@@ -8,24 +8,24 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root {
-  --bg: #0d0d0d;
-  --bg2: #141414;
-  --bg3: #1a1a1a;
-  --border: #2a2a2a;
+  --bg: #f5f5f5;
+  --bg2: #ffffff;
+  --bg3: #f0f0f0;
+  --border: #e0e0e0;
   --accent: #cc2200;
-  --accent2: #f5c400;
+  --accent2: #e6a800;
   --accent3: #ff3300;
-  --blue: #2980b9;
-  --blue2: #3498db;
+  --blue: #1a6fb5;
+  --blue2: #2176ae;
   --white: #ffffff;
-  --text: #f0f0f0;
-  --text2: #999999;
-  --text3: #555555;
-  --green: #27ae60;
+  --text: #1a1a1a;
+  --text2: #666666;
+  --text3: #aaaaaa;
+  --green: #1a8a4a;
   --red: #cc2200;
-  --gold: #f5c400;
-  --silver: #cccccc;
-  --bronze: #cd7f32;
+  --gold: #e6a800;
+  --silver: #888888;
+  --bronze: #a0522d;
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
@@ -38,8 +38,8 @@ body {
 
 /* ===== HEADER ===== */
 header {
-  background: linear-gradient(135deg, #0a0e17 0%, #0f1520 100%);
-  border-bottom: 2px solid var(--accent);
+  background: #1a1a1a;
+  border-bottom: 3px solid var(--accent);
   padding: 0 32px;
   display: flex;
   align-items: center;
@@ -48,7 +48,7 @@ header {
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: 0 2px 20px rgba(192,57,43,0.3);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.15);
 }
 .logo-area {
   display: flex;
@@ -59,14 +59,13 @@ header {
   width: 40px;
   height: 40px;
   object-fit: contain;
-  filter: drop-shadow(0 0 8px rgba(230,126,34,0.5));
 }
 .logo-text {
   font-family: 'Rajdhani', sans-serif;
   font-size: 20px;
   font-weight: 700;
   letter-spacing: 2px;
-  color: var(--white);
+  color: #ffffff;
 }
 .logo-text span {
   color: var(--accent2);
@@ -78,7 +77,7 @@ header {
 }
 nav { display: flex; gap: 4px; }
 nav a {
-  color: var(--text2);
+  color: #aaaaaa;
   text-decoration: none;
   padding: 8px 16px;
   font-size: 13px;
@@ -86,11 +85,11 @@ nav a {
   transition: all 0.2s;
   font-weight: 500;
 }
-nav a:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+nav a:hover { color: #ffffff; background: rgba(255,255,255,0.1); }
 nav a.active {
-  color: var(--white);
-  background: rgba(192,57,43,0.2);
-  border: 1px solid rgba(192,57,43,0.4);
+  color: #ffffff;
+  background: var(--accent);
+  border-radius: 4px;
 }
 
 /* ===== MAIN ===== */
@@ -110,6 +109,7 @@ main { max-width: 1400px; margin: 0 auto; padding: 28px 24px; }
   padding: 20px 24px;
   position: relative;
   overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
 .stat-card::before {
   content: '';
@@ -119,7 +119,7 @@ main { max-width: 1400px; margin: 0 auto; padding: 28px 24px; }
   background: linear-gradient(90deg, var(--accent), var(--accent2));
 }
 .stat-card .label { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px; }
-.stat-card .value { font-family: 'Rajdhani', sans-serif; font-size: 36px; font-weight: 700; color: var(--white); }
+.stat-card .value { font-family: 'Rajdhani', sans-serif; font-size: 36px; font-weight: 700; color: var(--text); }
 .stat-card .sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
 
 /* ===== SECTION ===== */
@@ -129,12 +129,12 @@ main { max-width: 1400px; margin: 0 auto; padding: 28px 24px; }
   justify-content: space-between;
   margin-bottom: 16px;
   padding-bottom: 12px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 2px solid var(--border);
 }
 .section-title {
   font-size: 13px;
-  font-weight: 600;
-  color: var(--text2);
+  font-weight: 700;
+  color: var(--text);
   text-transform: uppercase;
   letter-spacing: 2px;
   display: flex;
@@ -145,7 +145,7 @@ main { max-width: 1400px; margin: 0 auto; padding: 28px 24px; }
   content: '';
   width: 3px;
   height: 14px;
-  background: linear-gradient(180deg, var(--accent), var(--accent2));
+  background: var(--accent);
   border-radius: 2px;
 }
 
@@ -168,7 +168,7 @@ main { max-width: 1400px; margin: 0 auto; padding: 28px 24px; }
   outline: none;
   transition: border-color 0.2s;
 }
-.filter-bar input:focus, .filter-bar select:focus { border-color: var(--accent2); }
+.filter-bar input:focus, .filter-bar select:focus { border-color: var(--accent); }
 .filter-bar input { width: 200px; }
 
 /* ===== BUTTONS ===== */
@@ -183,16 +183,16 @@ main { max-width: 1400px; margin: 0 auto; padding: 28px 24px; }
   transition: all 0.2s;
 }
 .btn-primary {
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  background: var(--accent);
   color: white;
 }
-.btn-primary:hover { opacity: 0.85; transform: translateY(-1px); }
+.btn-primary:hover { background: #aa1800; transform: translateY(-1px); }
 .btn-ghost {
   background: transparent;
   border: 1px solid var(--border);
   color: var(--text2);
 }
-.btn-ghost:hover { border-color: var(--accent2); color: var(--text); }
+.btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
 
 /* ===== TABLE ===== */
 .table-wrap {
@@ -201,13 +201,14 @@ main { max-width: 1400px; margin: 0 auto; padding: 28px 24px; }
   border-radius: 10px;
   overflow: hidden;
   overflow-x: auto;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
-table { width: 100%; border-collapse: collapse; font-size: 15px; }
-thead { background: var(--bg3); }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+thead { background: #1a1a1a; }
 th {
   padding: 11px 14px;
   text-align: left;
-  color: var(--text2);
+  color: #cccccc;
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -216,14 +217,14 @@ th {
   cursor: pointer;
   user-select: none;
 }
-th:hover { color: var(--text); }
+th:hover { color: #ffffff; }
 th.sorted { color: var(--accent2); }
 td {
   padding: 10px 14px;
-  border-top: 1px solid rgba(30,45,66,0.7);
+  border-top: 1px solid var(--border);
   white-space: nowrap;
 }
-tr:hover td { background: rgba(255,255,255,0.02); }
+tr:hover td { background: #fafafa; }
 
 /* ===== RANK ===== */
 .rank { color: var(--text3); font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 15px; }
@@ -232,17 +233,17 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 .rank.top3 { color: var(--bronze); }
 
 /* ===== PLAYER NAME ===== */
-.player-name { font-weight: 500; color: var(--text); }
-.captain-icon { color: var(--accent); font-size: 11px; margin-right: 4px; }
-.vehicle-icon { color: var(--accent2); font-size: 11px; margin-right: 2px; }
+.player-name { font-weight: 600; color: var(--text); font-size: 14px; }
+.captain-icon { color: var(--accent); font-size: 12px; margin-right: 4px; }
+.vehicle-icon { color: var(--accent2); font-size: 12px; margin-right: 2px; }
 
 /* ===== STATS ===== */
-.kills { color: var(--white); font-family: 'Rajdhani', sans-serif; font-size: 17px; font-weight: 600; }
-.score { color: var(--accent2); font-family: 'Rajdhani', sans-serif; font-size: 17px; font-weight: 700; }
-.kd-good { color: var(--green); font-family: 'Rajdhani', sans-serif; font-weight: 600; }
-.kd-mid { color: var(--accent2); font-family: 'Rajdhani', sans-serif; font-weight: 600; }
-.kd-bad { color: var(--red); font-family: 'Rajdhani', sans-serif; font-weight: 600; }
-.stat-num { font-family: 'Rajdhani', sans-serif; font-size: 16px; color: var(--text2); }
+.kills { color: var(--text); font-family: 'Rajdhani', sans-serif; font-size: 16px; font-weight: 700; }
+.score { color: var(--accent); font-family: 'Rajdhani', sans-serif; font-size: 16px; font-weight: 700; }
+.kd-good { color: var(--green); font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 15px; }
+.kd-mid { color: var(--accent2); font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 15px; }
+.kd-bad { color: var(--red); font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 15px; }
+.stat-num { font-family: 'Rajdhani', sans-serif; font-size: 15px; color: var(--text2); }
 
 /* ===== BADGES ===== */
 .side-badge {
@@ -250,26 +251,11 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   padding: 2px 8px;
   border-radius: 3px;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.5px;
 }
-.side-atk { background: rgba(231,76,60,0.15); color: #e74c3c; border: 1px solid rgba(231,76,60,0.3); }
-.side-def { background: rgba(41,128,185,0.15); color: #3498db; border: 1px solid rgba(41,128,185,0.3); }
-.squad-badge {
-  display: inline-block;
-  width: 24px; height: 24px;
-  border-radius: 5px;
-  text-align: center;
-  line-height: 24px;
-  font-size: 11px;
-  font-weight: 700;
-  font-family: 'Rajdhani', sans-serif;
-}
-.sq-A { background: rgba(231,76,60,0.2); color: #e74c3c; }
-.sq-B { background: rgba(230,126,34,0.2); color: #e67e22; }
-.sq-C { background: rgba(241,196,15,0.2); color: #f1c40f; }
-.sq-D { background: rgba(46,204,113,0.2); color: #2ecc71; }
-.sq-E { background: rgba(52,152,219,0.2); color: #3498db; }
+.side-atk { background: #fff0ee; color: #cc2200; border: 1px solid #ffccc7; }
+.side-def { background: #e8f4ff; color: #1a6fb5; border: 1px solid #b8d9f5; }
 .type-badge {
   display: inline-block;
   padding: 2px 8px;
@@ -277,8 +263,8 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   font-size: 11px;
   font-weight: 600;
 }
-.type-vehicle { background: rgba(230,126,34,0.15); color: var(--accent2); border: 1px solid rgba(230,126,34,0.3); }
-.type-infantry { background: rgba(52,152,219,0.15); color: var(--blue2); border: 1px solid rgba(52,152,219,0.3); }
+.type-vehicle { background: #fff8e0; color: var(--accent2); border: 1px solid #ffe08a; }
+.type-infantry { background: #e8f4ff; color: var(--blue2); border: 1px solid #b8d9f5; }
 
 /* ===== DATE GROUP ===== */
 .date-group {
@@ -287,6 +273,7 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   border-radius: 10px;
   overflow: hidden;
   margin-bottom: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
 .date-group-header {
   display: flex;
@@ -295,13 +282,14 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   padding: 14px 20px;
   cursor: pointer;
   transition: background 0.2s;
+  background: var(--bg2);
 }
-.date-group-header:hover { background: rgba(255,255,255,0.02); }
+.date-group-header:hover { background: #fafafa; }
 .date-label {
   font-family: 'Rajdhani', sans-serif;
   font-size: 18px;
   font-weight: 700;
-  color: var(--white);
+  color: var(--text);
 }
 .date-meta { display: flex; align-items: center; gap: 12px; }
 .date-tag {
@@ -310,40 +298,41 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   background: var(--bg3);
   padding: 3px 10px;
   border-radius: 4px;
+  border: 1px solid var(--border);
 }
 .date-count {
   font-size: 12px;
-  color: var(--accent2);
+  color: var(--accent);
+  font-weight: 600;
 }
 .date-group-body { border-top: 1px solid var(--border); }
 
-/* ===== MATCH CARD ===== */
+/* ===== MATCH ROW ===== */
 .match-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 13px 20px;
-  border-bottom: 1px solid rgba(30,45,66,0.5);
+  border-bottom: 1px solid var(--border);
   cursor: pointer;
-  transition: all 0.2s;
-  text-decoration: none;
+  transition: all 0.15s;
   color: inherit;
 }
 .match-row:last-child { border-bottom: none; }
-.match-row:hover { background: rgba(255,255,255,0.02); padding-left: 26px; }
+.match-row:hover { background: #fafafa; padding-left: 26px; }
 .match-time { font-family: 'Rajdhani', sans-serif; font-size: 15px; font-weight: 600; color: var(--text2); min-width: 50px; }
-.match-teams { font-size: 14px; font-weight: 500; color: var(--text); }
-.match-vs { color: var(--text3); margin: 0 8px; }
+.match-teams { font-size: 14px; font-weight: 600; color: var(--text); }
+.match-vs { color: var(--text3); margin: 0 8px; font-weight: 400; }
 .match-info { display: flex; align-items: center; gap: 10px; }
 .match-map { font-size: 12px; color: var(--text2); }
 .match-open {
   font-size: 11px;
   padding: 2px 8px;
   border-radius: 3px;
-  font-weight: 600;
+  font-weight: 700;
 }
-.open-atk { background: rgba(231,76,60,0.15); color: #e74c3c; border: 1px solid rgba(231,76,60,0.3); }
-.open-def { background: rgba(41,128,185,0.15); color: #3498db; border: 1px solid rgba(41,128,185,0.3); }
+.open-atk { background: #fff0ee; color: #cc2200; border: 1px solid #ffccc7; }
+.open-def { background: #e8f4ff; color: #1a6fb5; border: 1px solid #b8d9f5; }
 .match-result-badge {
   font-family: 'Rajdhani', sans-serif;
   font-size: 13px;
@@ -352,8 +341,8 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   padding: 3px 10px;
   border-radius: 4px;
 }
-.result-win { background: rgba(39,174,96,0.15); color: #27ae60; border: 1px solid rgba(39,174,96,0.3); }
-.result-loss { background: rgba(231,76,60,0.15); color: #e74c3c; border: 1px solid rgba(231,76,60,0.3); }
+.result-win { background: #eafaf1; color: #1a8a4a; border: 1px solid #a8dfc0; }
+.result-loss { background: #fff0ee; color: #cc2200; border: 1px solid #ffccc7; }
 
 /* ===== MATCH DETAIL ===== */
 .match-detail-header {
@@ -367,12 +356,13 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
-.match-detail-title { font-size: 18px; font-weight: 600; color: var(--white); }
+.match-detail-title { font-size: 18px; font-weight: 700; color: var(--text); }
 .match-detail-meta { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 
 /* ===== TEAM TABS ===== */
-.team-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+.team-tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
 .team-tab {
   padding: 8px 20px;
   border-radius: 6px;
@@ -384,44 +374,45 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   color: var(--text2);
   transition: all 0.2s;
 }
+.team-tab:hover { border-color: var(--accent); color: var(--accent); }
 .team-tab.active {
-  background: rgba(192,57,43,0.2);
+  background: var(--accent);
   border-color: var(--accent);
-  color: var(--white);
+  color: white;
 }
 
-/* ===== INFANTRY/VEHICLE SECTION ===== */
+/* ===== UNIT SECTION ===== */
 .unit-section { margin-bottom: 24px; }
 .unit-label {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 2px;
-  color: var(--text2);
-  padding: 8px 14px;
-  background: var(--bg3);
+  color: #ffffff;
+  padding: 8px 16px;
+  background: #1a1a1a;
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
   gap: 8px;
 }
-.unit-label.infantry { border-left: 3px solid var(--blue2); }
-.unit-label.vehicle { border-left: 3px solid var(--accent2); }
+.unit-label.infantry { border-left: 4px solid var(--blue2); }
+.unit-label.vehicle { border-left: 4px solid var(--accent2); }
 
 /* ===== TABS ===== */
-.tabs { display: flex; gap: 0; margin-bottom: 24px; border-bottom: 1px solid var(--border); }
+.tabs { display: flex; gap: 0; margin-bottom: 24px; border-bottom: 2px solid var(--border); }
 .tab {
   padding: 10px 22px;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   color: var(--text2);
   border-bottom: 2px solid transparent;
   transition: all 0.2s;
-  margin-bottom: -1px;
+  margin-bottom: -2px;
 }
 .tab:hover { color: var(--text); }
-.tab.active { color: var(--white); border-bottom-color: var(--accent2); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 
 /* ===== ADMIN ===== */
 .admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
@@ -430,15 +421,16 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   border: 1px solid var(--border);
   border-radius: 10px;
   overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
 .admin-card-title {
   padding: 14px 20px;
   font-size: 13px;
-  font-weight: 600;
-  color: var(--text2);
+  font-weight: 700;
+  color: #ffffff;
   text-transform: uppercase;
   letter-spacing: 1.5px;
-  background: var(--bg3);
+  background: #1a1a1a;
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
@@ -446,7 +438,7 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 }
 .admin-card-body { padding: 20px; }
 .form-group { margin-bottom: 14px; }
-.form-group label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; }
+.form-group label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
 .form-group input, .form-group select, .form-group textarea {
   width: 100%;
   background: var(--bg3);
@@ -459,7 +451,7 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   outline: none;
   transition: border-color 0.2s;
 }
-.form-group input:focus, .form-group select:focus { border-color: var(--accent2); }
+.form-group input:focus, .form-group select:focus { border-color: var(--accent); }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .msg { font-size: 13px; margin-top: 10px; min-height: 20px; }
 
@@ -472,8 +464,9 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   cursor: pointer;
   transition: all 0.2s;
   margin-bottom: 16px;
+  background: var(--bg3);
 }
-.drop-zone:hover, .drop-zone.drag-over { border-color: var(--accent2); background: rgba(230,126,34,0.05); }
+.drop-zone:hover, .drop-zone.drag-over { border-color: var(--accent); background: #fff5f3; }
 .drop-zone-icon { font-size: 32px; margin-bottom: 10px; }
 .drop-zone-text { font-size: 13px; color: var(--text2); }
 .drop-zone-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
@@ -488,8 +481,9 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   display: flex;
   align-items: center;
   justify-content: space-between;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
 }
-.roster-name { font-weight: 500; font-size: 14px; }
+.roster-name { font-weight: 600; font-size: 14px; color: var(--text); }
 .roster-info { font-size: 11px; color: var(--text2); margin-top: 3px; }
 
 /* ===== EMPTY ===== */
@@ -497,28 +491,56 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   text-align: center;
   padding: 40px;
   color: var(--text3);
-  font-size: 13px;
+  font-size: 14px;
 }
 
 /* ===== TOP BANNER ===== */
 .overview-banner {
-  background: linear-gradient(135deg, rgba(192,57,43,0.15) 0%, rgba(230,126,34,0.1) 100%);
-  border: 1px solid rgba(192,57,43,0.3);
+  background: linear-gradient(135deg, #fff5f3 0%, #fffbf0 100%);
+  border: 1px solid #ffccc7;
   border-radius: 12px;
   padding: 20px 28px;
   margin-bottom: 24px;
   display: flex;
   align-items: center;
   gap: 20px;
+  box-shadow: 0 2px 8px rgba(204,34,0,0.08);
 }
 .overview-banner-logo {
   width: 56px;
   height: 56px;
   object-fit: contain;
-  filter: drop-shadow(0 0 12px rgba(230,126,34,0.4));
 }
-.overview-banner-text h2 { font-size: 20px; font-weight: 700; color: var(--white); }
+.overview-banner-text h2 { font-size: 20px; font-weight: 700; color: var(--text); }
 .overview-banner-text p { font-size: 13px; color: var(--text2); margin-top: 3px; }
+
+/* ===== PLAYER DETAIL ===== */
+.player-stat-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.player-stat-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px 20px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.player-stat-card .ps-label { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; font-weight: 600; }
+.player-stat-card .ps-value { font-family: 'Rajdhani', sans-serif; font-size: 32px; font-weight: 700; color: var(--accent); }
+.chart-wrap {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.chart-title { font-size: 13px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 16px; }
+
 </style>
 </head>
 <body>
@@ -1045,7 +1067,7 @@ function renderTeamTable(stats, rosterMap) {
           : '');
       return sectionLabel + `<tr>
         <td class="rank ${i===0?'top1':i===1?'top2':i===2?'top3':''}">${i+1}</td>
-        <td class="player-name">${s.player_name}</td>
+        <td class="player-name" style="cursor:pointer" onclick="viewPlayer('${s.player_name.replace(/'/g, \"'\")}')"><span style="text-decoration:underline;text-underline-offset:3px;text-decoration-color:#ccc">${s.player_name}</span></td>
         <td><span class="side-badge ${s.side==='进攻'?'side-atk':'side-def'}">${s.side||'—'}</span></td>
         <td class="kills">${s.kills||0}</td>
         <td class="stat-num">${s.deaths||0}</td>
@@ -1086,7 +1108,7 @@ function renderFullTable(stats, rosterMap) {
     return `<tr>
       <td class="rank ${i===0?'top1':i===1?'top2':i===2?'top3':''}">${i+1}</td>
       <td>${isCaptain?'<span class="captain-icon">★</span>':''}</td>
-      <td class="player-name">${isVehicle?'<span class="vehicle-icon">🚗</span>':''}${s.player_name}</td>
+      <td class="player-name" style="cursor:pointer" onclick="viewPlayer('${s.player_name.replace(/'/g, \"'\")}')"><span style="text-decoration:underline;text-underline-offset:3px;text-decoration-color:#ccc">${isVehicle?'<span class="vehicle-icon">🚗</span>':''}${s.player_name}</span></td>
       <td style="font-size:12px;color:var(--text2)">${s.team_name||'—'}</td>
       <td><span class="side-badge ${s.side==='进攻'?'side-atk':'side-def'}">${s.side||'—'}</span></td>
       <td class="kills">${s.kills||0}</td>
@@ -1130,7 +1152,7 @@ function renderUnitTable(stats, rosterMap, label, type, showExtra) {
     return `<tr>
       <td class="rank ${i===0?'top1':i===1?'top2':i===2?'top3':''}">${i+1}</td>
       <td>${isCaptain?'<span class="captain-icon">★</span>':''}</td>
-      <td class="player-name">${s.player_name}</td>
+      <td class="player-name" style="cursor:pointer" onclick="viewPlayer('${s.player_name.replace(/'/g, \"'\")}')"><span style="text-decoration:underline;text-underline-offset:3px;text-decoration-color:#ccc">${s.player_name}</span></td>
       <td><span class="side-badge ${s.side==='进攻'?'side-atk':'side-def'}">${s.side||'—'}</span></td>
       <td class="kills">${s.kills||0}</td>
       <td class="stat-num">${s.deaths||0}</td>
@@ -1231,7 +1253,7 @@ function renderPlayerTable(rows) {
   document.getElementById('player-table').innerHTML = filtered.map((r,i) => `
     <tr>
       <td class="rank ${i===0?'top1':i===1?'top2':i===2?'top3':''}">${i+1}</td>
-      <td class="player-name">${r.name}</td>
+      <td class="player-name" style="cursor:pointer" onclick="viewPlayer('${r.name.replace(/'/g, \"'\")}')"><span style="text-decoration:underline;text-underline-offset:3px;text-decoration-color:#ccc">${r.name}</span></td>
       <td class="stat-num">${r.games}</td>
       <td class="kills">${r.total_kills}</td>
       <td class="kills">${r.avg_kills}</td>
@@ -1498,6 +1520,181 @@ async function uploadCSV() {
     document.getElementById('csv-file').value = '';
     setTimeout(() => msg.textContent = '', 4000);
   }
+}
+
+
+// ===== PLAYER DETAIL =====
+async function viewPlayer(name) {
+  // 切到选手数据页
+  document.querySelectorAll('[id^="page-"]').forEach(p => p.style.display = 'none');
+  document.getElementById('page-players').style.display = '';
+  document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+  document.querySelectorAll('nav a')[2].classList.add('active');
+
+  const { data: stats } = await db.from('match_stats').select('*,matches(match_date,match_type,team1,team2)').eq('player_name', name).order('created_at', { ascending: true });
+  const { data: rInfo } = await db.from('players').select('*').eq('name', name).single();
+
+  if (!stats || !stats.length) {
+    document.getElementById('player-table').innerHTML = `<tr><td colspan="8" class="empty">暂无 ${name} 的数据</td></tr>`;
+    return;
+  }
+
+  // 统计
+  const games = stats.length;
+  const totalKills = stats.reduce((s,r) => s+(r.kills||0), 0);
+  const totalDeaths = stats.reduce((s,r) => s+(r.deaths||0), 0);
+  const totalAssists = stats.reduce((s,r) => s+(r.assists||0), 0);
+  const totalRescues = stats.reduce((s,r) => s+(r.rescues||0), 0);
+  const avgKills = (totalKills / games).toFixed(1);
+  const kdVal = kd(totalKills, totalDeaths);
+  const kdaVal = kda(totalKills, totalDeaths, totalAssists);
+
+  const typeLabel = rInfo ? (rInfo.player_type === 'vehicle' ? '🚗 载具队' : '步战队') : '—';
+  const teamLabel = rInfo ? (rInfo.team || '—') : '—';
+
+  // 替换整个选手页内容
+  const el = document.getElementById('page-players');
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+      <button class="btn btn-ghost" onclick="showPage('players', document.querySelectorAll('nav a')[2]);loadPlayerStats()">← 返回排名</button>
+      <div style="font-size:18px;font-weight:700;color:var(--text)">${name}</div>
+      <span style="font-size:12px;color:var(--text2);background:var(--bg3);padding:3px 10px;border-radius:4px;border:1px solid var(--border)">${teamLabel}</span>
+      <span style="font-size:12px;color:var(--text2);background:var(--bg3);padding:3px 10px;border-radius:4px;border:1px solid var(--border)">${typeLabel}</span>
+    </div>
+
+    <div class="player-stat-cards">
+      <div class="player-stat-card">
+        <div class="ps-label">场均击杀</div>
+        <div class="ps-value">${avgKills}</div>
+      </div>
+      <div class="player-stat-card">
+        <div class="ps-label">KD</div>
+        <div class="ps-value" style="color:${parseFloat(kdVal)>=2?'var(--green)':parseFloat(kdVal)>=1?'var(--accent2)':'var(--red)'}">${kdVal}</div>
+      </div>
+      <div class="player-stat-card">
+        <div class="ps-label">综合KDA</div>
+        <div class="ps-value" style="color:${parseFloat(kdaVal)>=3?'var(--green)':parseFloat(kdaVal)>=2?'var(--accent2)':'var(--red)'}">${kdaVal}</div>
+      </div>
+      <div class="player-stat-card">
+        <div class="ps-label">总救援</div>
+        <div class="ps-value">${totalRescues}</div>
+      </div>
+    </div>
+
+    <div class="chart-wrap">
+      <div class="chart-title">近期趋势 · 击杀 / KD</div>
+      <canvas id="trend-chart" height="80"></canvas>
+    </div>
+
+    <div class="section-header">
+      <div class="section-title">历史战绩</div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>日期</th><th>赛事</th><th>对手</th><th>阵营</th>
+          <th>击杀</th><th>死亡</th><th>助攻</th><th>分数</th><th>KD</th>
+        </tr></thead>
+        <tbody>
+          ${stats.map(s => {
+            const m = s.matches || {};
+            const opponent = s.team_name === m.team1 ? m.team2 : m.team1;
+            const kdv = kd(s.kills||0, s.deaths||0);
+            return `<tr>
+              <td style="color:var(--text2);font-size:13px">${m.match_date||'—'}</td>
+              <td><span class="date-tag">${m.match_type||'—'}</span></td>
+              <td style="font-weight:600">${opponent||'—'}</td>
+              <td><span class="side-badge ${s.side==='进攻'?'side-atk':'side-def'}">${s.side||'—'}</span></td>
+              <td class="kills">${s.kills||0}</td>
+              <td class="stat-num">${s.deaths||0}</td>
+              <td class="stat-num">${s.assists||0}</td>
+              <td class="score">${fmtNum(s.total_score||0)}</td>
+              <td class="${kdClass(kdv)}">${kdv}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  // 画折线图
+  drawTrendChart(stats);
+}
+
+function drawTrendChart(stats) {
+  const recent = stats.slice(-15);
+  const canvas = document.getElementById('trend-chart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.offsetWidth || 800;
+  const H = 120;
+  canvas.width = W;
+  canvas.height = H;
+
+  const kills = recent.map(s => s.kills||0);
+  const kds = recent.map(s => parseFloat(kd(s.kills||0, s.deaths||0)));
+  const labels = recent.map((s,i) => i+1);
+
+  const maxK = Math.max(...kills, 1);
+  const maxKD = Math.max(...kds, 1);
+  const pad = { t:10, b:30, l:30, r:20 };
+  const gW = W - pad.l - pad.r;
+  const gH = H - pad.t - pad.b;
+  const n = recent.length;
+
+  ctx.clearRect(0, 0, W, H);
+
+  // Grid lines
+  ctx.strokeStyle = '#e0e0e0';
+  ctx.lineWidth = 1;
+  for (let i=0; i<=4; i++) {
+    const y = pad.t + gH * (1 - i/4);
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(W-pad.r, y); ctx.stroke();
+  }
+
+  function drawLine(data, maxVal, color, dash=[]) {
+    ctx.beginPath();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2.5;
+    ctx.setLineDash(dash);
+    data.forEach((v, i) => {
+      const x = pad.l + (n <= 1 ? gW/2 : i * gW/(n-1));
+      const y = pad.t + gH * (1 - v/maxVal);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+    ctx.setLineDash([]);
+    // dots
+    data.forEach((v, i) => {
+      const x = pad.l + (n <= 1 ? gW/2 : i * gW/(n-1));
+      const y = pad.t + gH * (1 - v/maxVal);
+      ctx.beginPath();
+      ctx.arc(x, y, 3.5, 0, Math.PI*2);
+      ctx.fillStyle = color;
+      ctx.fill();
+    });
+  }
+
+  drawLine(kills, maxK, '#cc2200');
+  drawLine(kds, maxKD, '#e6a800', [5,3]);
+
+  // X labels
+  ctx.fillStyle = '#aaaaaa';
+  ctx.font = '11px Noto Sans SC';
+  ctx.textAlign = 'center';
+  recent.forEach((s, i) => {
+    const x = pad.l + (n <= 1 ? gW/2 : i * gW/(n-1));
+    const m = s.matches || {};
+    const label = m.match_date ? m.match_date.slice(5) : `第${i+1}场`;
+    ctx.fillText(label, x, H - 8);
+  });
+
+  // Legend
+  ctx.fillStyle = '#cc2200'; ctx.fillRect(W-120, 8, 14, 3);
+  ctx.fillStyle = '#555'; ctx.font = '11px Noto Sans SC'; ctx.textAlign = 'left';
+  ctx.fillText('击杀', W-102, 13);
+  ctx.fillStyle = '#e6a800'; ctx.fillRect(W-60, 8, 14, 3);
+  ctx.fillStyle = '#555'; ctx.fillText('KD', W-42, 13);
 }
 
 // ===== INIT =====
