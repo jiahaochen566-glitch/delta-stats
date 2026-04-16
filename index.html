@@ -1244,7 +1244,7 @@ async function loadPlayerStats() {
     kda_val: kda(d.kills, d.deaths, d.assists),
     total_rescues: d.rescues,
     player_type: (rosterMap[name] || {}).player_type || 'infantry'
-  })).sort((a,b) => b.total_kills - a.total_kills);
+  })).sort((a,b) => parseFloat(b.kd_val) - parseFloat(a.kd_val));
 
   // Set heads
   document.getElementById('player-table-head').innerHTML = `
@@ -1254,7 +1254,13 @@ async function loadPlayerStats() {
 }
 
 function renderPlayerTable(rows) {
-  const filtered = rows.filter(r => r.player_type === currentPlayerTab);
+  let filtered = rows.filter(r => r.player_type === currentPlayerTab);
+  // 步战队按KD排，载具队按总击杀排
+  if (currentPlayerTab === 'infantry') {
+    filtered = [...filtered].sort((a,b) => parseFloat(b.kd_val) - parseFloat(a.kd_val));
+  } else {
+    filtered = [...filtered].sort((a,b) => b.total_kills - a.total_kills);
+  }
   document.getElementById('player-table').innerHTML = filtered.map((r,i) => `
     <tr>
       <td class="rank ${i===0?'top1':i===1?'top2':i===2?'top3':''}">${i+1}</td>
@@ -1372,10 +1378,10 @@ async function loadAdminData() {
   const sel = document.getElementById('csv-match-select');
   const del = document.getElementById('delete-match-select');
   const opts = '<option value="">-- 请先选择比赛 --</option>' +
-    (matches||[]).map(m => `<option value="${m.id}">${m.match_date} ${m.match_time?m.match_time.slice(0,5):''} · ${m.match_type} · ${m.team1||'情久'} VS ${m.team2||'对手'}</option>`).join('');
+    (matches||[]).map(m => `<option value="${m.id}">${m.match_date} ${m.match_time?m.match_time.slice(0,5):''} · ${m.match_type} · ${m.team1||'情久'} VS ${m.team2||'对手'} · ${m.match_open||''}开</option>`).join('');
   sel.innerHTML = opts;
   del.innerHTML = '<option value="">-- 选择要删除的比赛 --</option>' +
-    (matches||[]).map(m => `<option value="${m.id}">${m.match_date} · ${m.team1||'情久'} VS ${m.team2||'对手'}</option>`).join('');
+    (matches||[]).map(m => `<option value="${m.id}">${m.match_date} ${m.match_time?m.match_time.slice(0,5):''} · ${m.team1||'情久'} VS ${m.team2||'对手'} · ${m.match_open||''}开</option>`).join('');
 }
 
 async function createMatch() {
@@ -1461,6 +1467,24 @@ async function uploadCSV() {
   if (!teamName) { msg.textContent = '请填写战队名称'; msg.style.color = 'var(--red)'; return; }
   if (!csvData.length) { msg.textContent = '没有数据'; msg.style.color = 'var(--red)'; return; }
 
+  // 先把这批数据解析出来，检测未知选手
+  const parsed_check = csvData.map(r => ({
+    name: r.player_name || r['选手名'] || r['ID'] || r['id'] || '',
+  })).filter(r => r.name);
+
+  const { data: rosterCheck } = await db.from('players').select('name');
+  const knownNames = new Set((rosterCheck||[]).map(p => p.name));
+  const unknownPlayers = parsed_check.map(r => r.name).filter(n => !knownNames.has(n));
+
+  if (unknownPlayers.length > 0) {
+    const confirmMsg = `以下 ${unknownPlayers.length} 位选手不在选手库中：\n\n${unknownPlayers.join('\n')}\n\n是否继续上传？\n（建议先去选手库添加这些选手，否则步战/载具类型无法识别）`;
+    if (!confirm(confirmMsg)) {
+      document.getElementById('upload-btn').disabled = false;
+      document.getElementById('upload-btn').style.opacity = '1';
+      return;
+    }
+  }
+
   msg.textContent = '上传中...'; msg.style.color = 'var(--text2)';
   document.getElementById('upload-btn').disabled = true;
 
@@ -1528,6 +1552,14 @@ async function uploadCSV() {
 }
 
 
+// ===== BACK TO RANK =====
+function backToRank() {
+  document.getElementById('player-detail-view').style.display = 'none';
+  document.getElementById('player-rank-view').style.display = '';
+  // 强制重新加载数据
+  loadPlayerStats();
+}
+
 // ===== PLAYER DETAIL =====
 async function viewPlayer(name) {
   // 切到选手数据页
@@ -1564,7 +1596,7 @@ async function viewPlayer(name) {
   const el = document.getElementById('player-detail-view');
   el.innerHTML = `
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
-      <button class="btn btn-ghost" onclick="document.getElementById('player-rank-view').style.display='';document.getElementById('player-detail-view').style.display='none'">← 返回排名</button>
+      <button class="btn btn-ghost" onclick="backToRank()">← 返回排名</button>
       <div style="font-size:18px;font-weight:700;color:var(--text)">${name}</div>
       <span style="font-size:12px;color:var(--text2);background:var(--bg3);padding:3px 10px;border-radius:4px;border:1px solid var(--border)">${teamLabel}</span>
       <span style="font-size:12px;color:var(--text2);background:var(--bg3);padding:3px 10px;border-radius:4px;border:1px solid var(--border)">${typeLabel}</span>
