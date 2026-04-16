@@ -8,23 +8,23 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root {
-  --bg: #0a0e17;
-  --bg2: #0f1520;
-  --bg3: #162030;
-  --border: #1e2d42;
-  --accent: #c0392b;
-  --accent2: #e67e22;
-  --accent3: #e74c3c;
+  --bg: #0d0d0d;
+  --bg2: #141414;
+  --bg3: #1a1a1a;
+  --border: #2a2a2a;
+  --accent: #cc2200;
+  --accent2: #f5c400;
+  --accent3: #ff3300;
   --blue: #2980b9;
   --blue2: #3498db;
-  --white: #f0f4f8;
-  --text: #e8eef4;
-  --text2: #8fa8c0;
-  --text3: #3d5468;
+  --white: #ffffff;
+  --text: #f0f0f0;
+  --text2: #999999;
+  --text3: #555555;
   --green: #27ae60;
-  --red: #e74c3c;
-  --gold: #f39c12;
-  --silver: #bdc3c7;
+  --red: #cc2200;
+  --gold: #f5c400;
+  --silver: #cccccc;
   --bronze: #cd7f32;
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -32,6 +32,7 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: 'Noto Sans SC', sans-serif;
+  font-size: 15px;
   min-height: 100vh;
 }
 
@@ -201,7 +202,7 @@ main { max-width: 1400px; margin: 0 auto; padding: 28px 24px; }
   overflow: hidden;
   overflow-x: auto;
 }
-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+table { width: 100%; border-collapse: collapse; font-size: 15px; }
 thead { background: var(--bg3); }
 th {
   padding: 11px 14px;
@@ -236,12 +237,12 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 .vehicle-icon { color: var(--accent2); font-size: 11px; margin-right: 2px; }
 
 /* ===== STATS ===== */
-.kills { color: var(--white); font-family: 'Rajdhani', sans-serif; font-size: 15px; font-weight: 600; }
-.score { color: var(--accent2); font-family: 'Rajdhani', sans-serif; font-size: 15px; font-weight: 700; }
+.kills { color: var(--white); font-family: 'Rajdhani', sans-serif; font-size: 17px; font-weight: 600; }
+.score { color: var(--accent2); font-family: 'Rajdhani', sans-serif; font-size: 17px; font-weight: 700; }
 .kd-good { color: var(--green); font-family: 'Rajdhani', sans-serif; font-weight: 600; }
 .kd-mid { color: var(--accent2); font-family: 'Rajdhani', sans-serif; font-weight: 600; }
 .kd-bad { color: var(--red); font-family: 'Rajdhani', sans-serif; font-weight: 600; }
-.stat-num { font-family: 'Rajdhani', sans-serif; font-size: 14px; color: var(--text2); }
+.stat-num { font-family: 'Rajdhani', sans-serif; font-size: 16px; color: var(--text2); }
 
 /* ===== BADGES ===== */
 .side-badge {
@@ -958,6 +959,7 @@ async function viewMatch(matchId) {
     </div>
     <div class="team-tabs" id="match-team-tabs">
       <div class="team-tab active" onclick="switchMatchTeam('all',this)">全部 40人</div>
+      <div class="team-tab" onclick="switchMatchTeam('teamtable',this)">战队表</div>
       <div class="team-tab" onclick="switchMatchTeam('${team1}',this)">${team1}</div>
       <div class="team-tab" onclick="switchMatchTeam('${team2}',this)">${team2}</div>
     </div>
@@ -981,6 +983,11 @@ function renderMatchDetail(team) {
   let stats = window._matchStats;
   const rosterMap = window._rosterMap;
   const team1 = window._matchTeam1;
+
+  if (team === 'teamtable') {
+    document.getElementById('match-detail-body').innerHTML = renderTeamTable(stats, rosterMap);
+    return;
+  }
 
   if (team !== 'all') {
     stats = stats.filter(s => (s.team_name || team1) === team);
@@ -1010,6 +1017,63 @@ function renderMatchDetail(team) {
   }
 
   document.getElementById('match-detail-body').innerHTML = html;
+}
+
+function renderTeamTable(stats, rosterMap) {
+  // 按战队分组
+  const teams = {};
+  stats.forEach(s => {
+    const t = s.team_name || '未知';
+    if (!teams[t]) teams[t] = [];
+    teams[t].push(s);
+  });
+
+  return Object.entries(teams).map(([teamName, teamStats]) => {
+    // 按阵营分进攻/防守，各自按分数排名
+    const atk = [...teamStats].filter(s => s.side === '进攻').sort((a,b) => (b.total_score||0)-(a.total_score||0));
+    const def = [...teamStats].filter(s => s.side === '防守').sort((a,b) => (b.total_score||0)-(a.total_score||0));
+    const sorted = [...atk, ...def];
+
+    const rows = sorted.map((s, i) => {
+      const kdVal = kd(s.kills||0, s.deaths||0);
+      const kdaVal = kda(s.kills||0, s.deaths||0, s.assists||0);
+      const isSectionStart = i === 0 || (i === atk.length && def.length > 0);
+      const sectionLabel = i === 0 && atk.length > 0
+        ? `<tr><td colspan="12" style="padding:6px 14px;background:rgba(204,34,0,0.15);color:#cc2200;font-size:12px;font-weight:700;letter-spacing:2px">— 进攻 —</td></tr>`
+        : (i === atk.length && def.length > 0
+          ? `<tr><td colspan="12" style="padding:6px 14px;background:rgba(41,128,185,0.15);color:#3498db;font-size:12px;font-weight:700;letter-spacing:2px">— 防守 —</td></tr>`
+          : '');
+      return sectionLabel + `<tr>
+        <td class="rank ${i===0?'top1':i===1?'top2':i===2?'top3':''}">${i+1}</td>
+        <td class="player-name">${s.player_name}</td>
+        <td><span class="side-badge ${s.side==='进攻'?'side-atk':'side-def'}">${s.side||'—'}</span></td>
+        <td class="kills">${s.kills||0}</td>
+        <td class="stat-num">${s.deaths||0}</td>
+        <td class="stat-num">${s.assists||0}</td>
+        <td class="stat-num">${s.rescues||0}</td>
+        <td class="stat-num">${s.occupy_score||0}</td>
+        <td class="score">${fmtNum(s.total_score||0)}</td>
+        <td class="${kdClass(kdVal)}">${kdVal}</td>
+        <td class="${kdClass(kdaVal)}">${kdaVal}</td>
+        <td class="stat-num">${s.kill_participation ? (s.kill_participation*100).toFixed(1)+'%' : '—'}</td>
+        <td class="stat-num">${s.rescue_contribution ? (s.rescue_contribution*100).toFixed(1)+'%' : '—'}</td>
+      </tr>`;
+    }).join('');
+
+    return `<div class="unit-section" style="margin-bottom:24px">
+      <div class="table-wrap">
+        <div style="padding:10px 16px;background:var(--bg3);border-bottom:1px solid var(--border);font-size:14px;font-weight:700;color:var(--accent2);letter-spacing:2px">${teamName}</div>
+        <table>
+          <thead><tr>
+            <th>#</th><th>选手</th><th>阵营</th>
+            <th>击杀</th><th>死亡</th><th>助攻</th><th>救援</th><th>占点分</th>
+            <th>分数</th><th>KD</th><th>综合KDA</th><th>击杀参与率</th><th>救援贡献率</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 function renderFullTable(stats, rosterMap) {
