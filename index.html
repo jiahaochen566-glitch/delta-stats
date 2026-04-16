@@ -1053,11 +1053,11 @@ function renderMatchDetail(team) {
 
   // Split by infantry/vehicle using roster
   const infantry = stats.filter(s => {
-    const r = rosterMap[s.player_name];
+    const r = getRosterByName(s.player_name);
     return !r || r.player_type !== 'vehicle';
   });
   const vehicle = stats.filter(s => {
-    const r = rosterMap[s.player_name];
+    const r = getRosterByName(s.player_name);
     return r && r.player_type === 'vehicle';
   });
 
@@ -1535,7 +1535,7 @@ async function uploadCSV() {
 
   // 计算步战队总击杀（用于占步战击杀%）
   const infantryKills = parsed
-    .filter(r => (rosterMap[r.name] || {}).player_type !== 'vehicle')
+    .filter(r => getRosterByName(r.name).player_type !== 'vehicle')
     .reduce((s, r) => s + r.kills, 0);
 
   const rows = parsed.map(r => {
