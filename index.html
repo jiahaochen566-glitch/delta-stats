@@ -601,27 +601,32 @@ tr:hover td { background: #fafafa; }
 
   <!-- ===== PLAYERS ===== -->
   <div id="page-players" style="display:none">
-    <div class="tabs">
-      <div class="tab active" onclick="switchPlayerTab('infantry',this)">步战队</div>
-      <div class="tab" onclick="switchPlayerTab('vehicle',this)">载具队</div>
-    </div>
-    <div class="section-header">
-      <div class="section-title" id="player-tab-title">步战队排名</div>
-      <div class="filter-bar" style="margin:0">
-        <input type="text" id="search-player" placeholder="搜索选手..." oninput="filterPlayers()">
-        <select id="filter-match-for-player" onchange="loadPlayerStats()">
-          <option value="">全部比赛</option>
-        </select>
+    <!-- 排名列表 -->
+    <div id="player-rank-view">
+      <div class="tabs">
+        <div class="tab active" onclick="switchPlayerTab('infantry',this)">步战队</div>
+        <div class="tab" onclick="switchPlayerTab('vehicle',this)">载具队</div>
+      </div>
+      <div class="section-header">
+        <div class="section-title" id="player-tab-title">步战队排名</div>
+        <div class="filter-bar" style="margin:0">
+          <input type="text" id="search-player" placeholder="搜索选手..." oninput="filterPlayers()">
+          <select id="filter-match-for-player" onchange="loadPlayerStats()">
+            <option value="">全部比赛</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr id="player-table-head"></tr>
+          </thead>
+          <tbody id="player-table"></tbody>
+        </table>
       </div>
     </div>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr id="player-table-head"></tr>
-        </thead>
-        <tbody id="player-table"></tbody>
-      </table>
-    </div>
+    <!-- 选手详情 -->
+    <div id="player-detail-view" style="display:none"></div>
   </div>
 
   <!-- ===== ROSTER ===== -->
@@ -1530,6 +1535,9 @@ async function viewPlayer(name) {
   document.getElementById('page-players').style.display = '';
   document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
   document.querySelectorAll('nav a')[2].classList.add('active');
+  // 切换显示详情
+  document.getElementById('player-rank-view').style.display = 'none';
+  document.getElementById('player-detail-view').style.display = '';
 
   const { data: stats } = await db.from('match_stats').select('*,matches(match_date,match_type,team1,team2)').eq('player_name', name).order('created_at', { ascending: true });
   const { data: rInfo } = await db.from('players').select('*').eq('name', name).single();
@@ -1553,10 +1561,10 @@ async function viewPlayer(name) {
   const teamLabel = rInfo ? (rInfo.team || '—') : '—';
 
   // 替换整个选手页内容
-  const el = document.getElementById('page-players');
+  const el = document.getElementById('player-detail-view');
   el.innerHTML = `
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
-      <button class="btn btn-ghost" onclick="showPage('players', document.querySelectorAll('nav a')[2]);loadPlayerStats()">← 返回排名</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('player-rank-view').style.display='';document.getElementById('player-detail-view').style.display='none'">← 返回排名</button>
       <div style="font-size:18px;font-weight:700;color:var(--text)">${name}</div>
       <span style="font-size:12px;color:var(--text2);background:var(--bg3);padding:3px 10px;border-radius:4px;border:1px solid var(--border)">${teamLabel}</span>
       <span style="font-size:12px;color:var(--text2);background:var(--bg3);padding:3px 10px;border-radius:4px;border:1px solid var(--border)">${typeLabel}</span>
