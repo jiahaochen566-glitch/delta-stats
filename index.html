@@ -803,6 +803,83 @@ tr:hover td { background: #fafafa; }
       </div>
     </div>
 
+    <!-- 编辑比赛 -->
+    <div style="margin-top:20px">
+      <div class="admin-card">
+        <div class="admin-card-title">✏️ 编辑比赛</div>
+        <div class="admin-card-body">
+          <div class="form-group">
+            <label>选择要编辑的比赛</label>
+            <select id="edit-match-select" onchange="loadEditMatch()">
+              <option value="">-- 选择比赛 --</option>
+            </select>
+          </div>
+          <div id="edit-match-form" style="display:none">
+            <div class="form-row">
+              <div class="form-group">
+                <label>日期</label>
+                <input type="date" id="edit-match-date">
+              </div>
+              <div class="form-group">
+                <label>时间</label>
+                <input type="time" id="edit-match-time">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>类型</label>
+                <select id="edit-match-type">
+                  <option>训练赛</option>
+                  <option>正式赛</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>地图</label>
+                <input type="text" id="edit-match-map" placeholder="如：烬区">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>模式</label>
+                <input type="text" id="edit-match-mode" placeholder="如：攀升">
+              </div>
+              <div class="form-group">
+                <label>我方开局</label>
+                <select id="edit-match-open">
+                  <option value="进攻">进攻开</option>
+                  <option value="防守">防守开</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>我方战队</label>
+                <input type="text" id="edit-match-team1">
+              </div>
+              <div class="form-group">
+                <label>对手战队</label>
+                <input type="text" id="edit-match-team2">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>比赛结果</label>
+              <select id="edit-match-result">
+                <option value="">待定</option>
+                <option value="胜">胜</option>
+                <option value="负">负</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>备注</label>
+              <input type="text" id="edit-match-notes">
+            </div>
+            <button class="btn btn-primary" onclick="saveEditMatch()">保存修改</button>
+            <div class="msg" id="edit-match-msg"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- 删除管理 -->
     <div style="margin-top:20px">
       <div class="admin-card">
@@ -1410,10 +1487,16 @@ async function loadAdminData() {
   const sel = document.getElementById('csv-match-select');
   const del = document.getElementById('delete-match-select');
   const opts = '<option value="">-- 请先选择比赛 --</option>' +
-    (matches||[]).map(m => `<option value="${m.id}">${m.match_date} ${m.match_time?m.match_time.slice(0,5):''} · ${m.match_type} · ${m.team1||'情久'} VS ${m.team2||'对手'} · ${m.match_open||''}开</option>`).join('');
+    (matches||[]).map(m => `<option value="${m.id}">${m.match_date} ${m.match_time?m.match_time.slice(0,5):''} · ${m.map_name||''} · ${m.match_type} · ${m.team1||'情久'} VS ${m.team2||'对手'} · ${m.match_open||''}开</option>`).join('');
   sel.innerHTML = opts;
   del.innerHTML = '<option value="">-- 选择比赛 --</option>' +
-    (matches||[]).map(m => `<option value="${m.id}">${m.match_date} ${m.match_time?m.match_time.slice(0,5):''} · ${m.team1||'情久'} VS ${m.team2||'对手'} · ${m.match_open||''}开</option>`).join('');
+    (matches||[]).map(m => `<option value="${m.id}">${m.match_date} ${m.match_time?m.match_time.slice(0,5):''} · ${m.map_name||''} · ${m.team1||'情久'} VS ${m.team2||'对手'} · ${m.match_open||''}开</option>`).join('');
+
+  const editSel = document.getElementById('edit-match-select');
+  if (editSel) {
+    editSel.innerHTML = '<option value="">-- 选择比赛 --</option>' +
+      (matches||[]).map(m => `<option value="${m.id}">${m.match_date} ${m.match_time?m.match_time.slice(0,5):''} · ${m.map_name||''} · ${m.team1||'情久'} VS ${m.team2||'对手'} · ${m.match_open||''}开</option>`).join('');
+  }
 }
 
 async function createMatch() {
@@ -1432,6 +1515,55 @@ async function createMatch() {
   const { error } = await db.from('matches').insert({ match_date: date, match_time: time, match_type: type, map_name: map, match_mode: mode, match_open: open, team1, team2, result: result||null, notes });
   if (error) { msg.textContent = '创建失败：' + error.message; msg.style.color = 'var(--red)'; }
   else { msg.textContent = '✓ 创建成功'; msg.style.color = 'var(--green)'; loadAdminData(); setTimeout(() => msg.textContent = '', 3000); }
+}
+
+
+async function loadEditMatch() {
+  const id = document.getElementById('edit-match-select').value;
+  const form = document.getElementById('edit-match-form');
+  if (!id) { form.style.display = 'none'; return; }
+
+  const { data: m } = await db.from('matches').select('*').eq('id', id).single();
+  if (!m) return;
+
+  document.getElementById('edit-match-date').value = m.match_date || '';
+  document.getElementById('edit-match-time').value = m.match_time ? m.match_time.slice(0,5) : '';
+  document.getElementById('edit-match-type').value = m.match_type || '训练赛';
+  document.getElementById('edit-match-map').value = m.map_name || '';
+  document.getElementById('edit-match-mode').value = m.match_mode || '';
+  document.getElementById('edit-match-open').value = m.match_open || '进攻';
+  document.getElementById('edit-match-team1').value = m.team1 || '情久';
+  document.getElementById('edit-match-team2').value = m.team2 || '';
+  document.getElementById('edit-match-result').value = m.result || '';
+  document.getElementById('edit-match-notes').value = m.notes || '';
+  form.style.display = '';
+}
+
+async function saveEditMatch() {
+  const id = document.getElementById('edit-match-select').value;
+  const msg = document.getElementById('edit-match-msg');
+  if (!id) return;
+
+  const { error } = await db.from('matches').update({
+    match_date: document.getElementById('edit-match-date').value,
+    match_time: document.getElementById('edit-match-time').value || null,
+    match_type: document.getElementById('edit-match-type').value,
+    map_name: document.getElementById('edit-match-map').value,
+    match_mode: document.getElementById('edit-match-mode').value,
+    match_open: document.getElementById('edit-match-open').value,
+    team1: document.getElementById('edit-match-team1').value,
+    team2: document.getElementById('edit-match-team2').value,
+    result: document.getElementById('edit-match-result').value || null,
+    notes: document.getElementById('edit-match-notes').value,
+  }).eq('id', id);
+
+  if (error) { msg.textContent = '保存失败：' + error.message; msg.style.color = 'var(--red)'; }
+  else {
+    msg.textContent = '✓ 保存成功';
+    msg.style.color = 'var(--green)';
+    loadAdminData();
+    setTimeout(() => msg.textContent = '', 3000);
+  }
 }
 
 async function loadDeleteTeams() {
