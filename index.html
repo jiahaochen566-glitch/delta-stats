@@ -546,6 +546,25 @@ tr:hover td { background: #fafafa; }
 </head>
 <body>
 
+<!-- 密码锁 -->
+<div id="lock-screen" style="position:fixed;top:0;left:0;right:0;bottom:0;background:#1a1a1a;z-index:9999;display:flex;align-items:center;justify-content:center">
+  <div style="background:#ffffff;border-radius:12px;padding:40px 48px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.3);min-width:320px">
+    <img src="logo.png" alt="" style="width:64px;height:64px;object-fit:contain;margin-bottom:16px">
+    <div style="font-size:20px;font-weight:700;color:#1a1a1a;margin-bottom:4px">情久俱乐部</div>
+    <div style="font-size:13px;color:#999;margin-bottom:24px;letter-spacing:1px">STATS DATABASE</div>
+    <input type="password" id="lock-input" placeholder="请输入访问密码" 
+      style="width:100%;padding:12px 16px;border:2px solid #e0e0e0;border-radius:8px;font-size:16px;outline:none;text-align:center;font-family:'Noto Sans SC',sans-serif;margin-bottom:12px"
+      onkeydown="if(event.key==='Enter')checkPassword()"
+      onfocus="this.style.borderColor='#cc2200'"
+      onblur="this.style.borderColor='#e0e0e0'">
+    <div id="lock-error" style="font-size:13px;color:#cc2200;margin-bottom:12px;min-height:18px"></div>
+    <button onclick="checkPassword()" 
+      style="width:100%;padding:12px;background:#cc2200;color:white;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;font-family:'Noto Sans SC',sans-serif">
+      进入
+    </button>
+  </div>
+</div>
+
 <header>
   <div class="logo-area">
     <img class="logo-img" src="logo.png" alt="情久俱乐部">
@@ -2002,7 +2021,24 @@ function drawTrendChart(stats) {
   ctx.fillStyle = '#555'; ctx.fillText('KD', W-42, 13);
 }
 
+// ===== AUTH =====
+function checkPassword() {
+  const input = document.getElementById('lock-input').value;
+  if (input === '477') {
+    document.getElementById('lock-screen').style.display = 'none';
+    sessionStorage.setItem('qj_auth', '1');
+  } else {
+    document.getElementById('lock-error').textContent = '密码错误，请重试';
+    document.getElementById('lock-input').value = '';
+    document.getElementById('lock-input').focus();
+  }
+}
+
 // ===== INIT =====
+// 检查是否已登录
+if (sessionStorage.getItem('qj_auth') === '1') {
+  document.getElementById('lock-screen').style.display = 'none';
+}
 loadOverview();
 </script>
 </body>
