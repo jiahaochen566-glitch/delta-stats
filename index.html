@@ -212,7 +212,7 @@ th {
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 1px;
-  font-weight: 600;
+  font-weight: 700;
   white-space: nowrap;
   cursor: pointer;
   user-select: none;
@@ -223,6 +223,7 @@ td {
   padding: 10px 14px;
   border-top: 1px solid var(--border);
   white-space: nowrap;
+  font-weight: 500;
 }
 tr:hover td { background: #fafafa; }
 
@@ -243,7 +244,7 @@ tr:hover td { background: #fafafa; }
 .kd-good { color: var(--green); font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 15px; }
 .kd-mid { color: var(--accent2); font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 15px; }
 .kd-bad { color: var(--red); font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 15px; }
-.stat-num { font-family: 'Rajdhani', sans-serif; font-size: 15px; color: var(--text2); }
+.stat-num { font-family: 'Rajdhani', sans-serif; font-size: 15px; font-weight: 600; color: var(--text2); }
 
 /* ===== BADGES ===== */
 .side-badge {
@@ -807,12 +808,20 @@ tr:hover td { background: #fafafa; }
       <div class="admin-card">
         <div class="admin-card-title">🗑️ 数据管理</div>
         <div class="admin-card-body">
-          <div style="font-size:13px;color:var(--text2);margin-bottom:12px">删除比赛场次（同时删除该场次所有数据）</div>
-          <div style="display:flex;gap:10px;align-items:center">
-            <select id="delete-match-select" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px 12px;font-size:13px;font-family:'Noto Sans SC',sans-serif;outline:none">
-              <option value="">-- 选择要删除的比赛 --</option>
+          <div class="form-group">
+            <label>选择比赛</label>
+            <select id="delete-match-select" onchange="loadDeleteTeams()">
+              <option value="">-- 选择比赛 --</option>
             </select>
-            <button class="btn" style="background:rgba(231,76,60,0.2);border:1px solid var(--red);color:var(--red)" onclick="deleteMatch()">删除</button>
+          </div>
+          <div class="form-group">
+            <label>删除范围</label>
+            <select id="delete-team-select">
+              <option value="all">整场比赛（全部数据）</option>
+            </select>
+          </div>
+          <div style="display:flex;gap:10px">
+            <button class="btn" style="background:rgba(231,76,60,0.15);border:1px solid var(--red);color:var(--red);font-weight:600" onclick="deleteMatch()">确认删除</button>
           </div>
           <div class="msg" id="delete-msg"></div>
         </div>
@@ -1403,7 +1412,7 @@ async function loadAdminData() {
   const opts = '<option value="">-- 请先选择比赛 --</option>' +
     (matches||[]).map(m => `<option value="${m.id}">${m.match_date} ${m.match_time?m.match_time.slice(0,5):''} · ${m.match_type} · ${m.team1||'情久'} VS ${m.team2||'对手'} · ${m.match_open||''}开</option>`).join('');
   sel.innerHTML = opts;
-  del.innerHTML = '<option value="">-- 选择要删除的比赛 --</option>' +
+  del.innerHTML = '<option value="">-- 选择比赛 --</option>' +
     (matches||[]).map(m => `<option value="${m.id}">${m.match_date} ${m.match_time?m.match_time.slice(0,5):''} · ${m.team1||'情久'} VS ${m.team2||'对手'} · ${m.match_open||''}开</option>`).join('');
 }
 
@@ -1425,15 +1434,44 @@ async function createMatch() {
   else { msg.textContent = '✓ 创建成功'; msg.style.color = 'var(--green)'; loadAdminData(); setTimeout(() => msg.textContent = '', 3000); }
 }
 
+async function loadDeleteTeams() {
+  const id = document.getElementById('delete-match-select').value;
+  const sel = document.getElementById('delete-team-select');
+  sel.innerHTML = '<option value="all">整场比赛（全部数据）</option>';
+  if (!id) return;
+  // 查这场比赛里有哪些战队
+  const { data: stats } = await db.from('match_stats').select('team_name').eq('match_id', id);
+  const teams = [...new Set((stats||[]).map(s => s.team_name).filter(Boolean))];
+  teams.forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t;
+    opt.textContent = `只删除 ${t} 的数据`;
+    sel.appendChild(opt);
+  });
+}
+
 async function deleteMatch() {
   const id = document.getElementById('delete-match-select').value;
+  const team = document.getElementById('delete-team-select').value;
   const msg = document.getElementById('delete-msg');
   if (!id) { msg.textContent = '请选择比赛'; msg.style.color = 'var(--red)'; return; }
-  if (!confirm('确认删除该比赛及其所有数据？此操作不可恢复。')) return;
-  await db.from('match_stats').delete().eq('match_id', id);
-  await db.from('matches').delete().eq('id', id);
-  msg.textContent = '✓ 已删除'; msg.style.color = 'var(--green)';
-  loadAdminData(); setTimeout(() => msg.textContent = '', 3000);
+
+  const confirmText = team === 'all'
+    ? '确认删除整场比赛及全部数据？此操作不可恢复。'
+    : `确认只删除 ${team} 在这场比赛的数据？`;
+  if (!confirm(confirmText)) return;
+
+  if (team === 'all') {
+    await db.from('match_stats').delete().eq('match_id', id);
+    await db.from('matches').delete().eq('id', id);
+    msg.textContent = '✓ 整场比赛已删除';
+  } else {
+    await db.from('match_stats').delete().eq('match_id', id).eq('team_name', team);
+    msg.textContent = `✓ ${team} 的数据已删除`;
+  }
+  msg.style.color = 'var(--green)';
+  loadAdminData();
+  setTimeout(() => msg.textContent = '', 3000);
 }
 
 // ===== CSV =====
