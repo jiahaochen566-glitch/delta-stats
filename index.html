@@ -607,9 +607,10 @@ tr:hover td { background: rgba(255,255,255,0.02); }
       <div class="section-title">选手库</div>
       <button class="btn btn-primary" onclick="showAddPlayer()">+ 新增选手</button>
     </div>
-    <div class="tabs">
-      <div class="tab active" onclick="switchRosterTab('infantry',this)">步战队</div>
-      <div class="tab" onclick="switchRosterTab('vehicle',this)">载具队</div>
+    <div class="tabs" id="roster-team-tabs">
+      <div class="tab active" onclick="switchRosterTab('情久',this)">情久</div>
+      <div class="tab" onclick="switchRosterTab('奇迹',this)">奇迹</div>
+      <div class="tab" onclick="switchRosterTab('待定',this)">待定</div>
       <div class="tab" onclick="switchRosterTab('all',this)">全部</div>
     </div>
     <div id="roster-list"></div>
@@ -1165,36 +1166,75 @@ function filterPlayers() {
 }
 
 // ===== ROSTER =====
-let currentRosterTab = 'infantry';
+let currentRosterTab = '情久';
+let allPlayers = [];
+
 async function loadRoster() {
   const { data: players } = await db.from('players').select('*').order('name');
-  renderRoster(players || []);
+  allPlayers = players || [];
+  renderRoster(allPlayers);
 }
 
 function switchRosterTab(tab, el) {
-  document.querySelectorAll('#page-roster .tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('#roster-team-tabs .tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
   currentRosterTab = tab;
-  loadRoster();
+  renderRoster(allPlayers);
+}
+
+function renderRosterGroup(players, label, type) {
+  const group = players.filter(p => p.player_type === type);
+  if (!group.length) return '';
+  const icon = type === 'vehicle' ? '🚗 ' : '';
+  return `
+    <div class="unit-section" style="margin-bottom:20px">
+      <div class="table-wrap">
+        <div class="unit-label ${type}" style="padding:8px 16px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--text2)">
+          — ${icon}${label} —
+        </div>
+        <div class="roster-grid" style="padding:12px">
+          ${group.map(p => `
+            <div class="roster-card">
+              <div>
+                <div class="roster-name">
+                  ${p.is_captain ? '<span class="captain-icon">★</span>' : ''}
+                  ${type === 'vehicle' ? '<span class="vehicle-icon">🚗</span>' : ''}
+                  ${p.name}
+                </div>
+                <div class="roster-info">${p.team||'—'}</div>
+              </div>
+              <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="deletePlayer(${p.id},'${p.name}')">删除</button>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>`;
 }
 
 function renderRoster(players) {
-  let filtered = players;
-  if (currentRosterTab !== 'all') filtered = players.filter(p => p.player_type === currentRosterTab);
   const el = document.getElementById('roster-list');
+  let filtered = currentRosterTab === 'all' ? players : players.filter(p => (p.team||'待定') === currentRosterTab);
   if (!filtered.length) { el.innerHTML = '<div class="empty">暂无选手</div>'; return; }
-  el.innerHTML = `<div class="roster-grid">${filtered.map(p => `
-    <div class="roster-card">
-      <div>
-        <div class="roster-name">
-          ${p.is_captain ? '<span class="captain-icon">★</span>' : ''}
-          ${p.player_type === 'vehicle' ? '<span class="vehicle-icon">🚗</span>' : ''}
-          ${p.name}
+
+  if (currentRosterTab === 'all') {
+    // 全部模式：直接列表，显示战队标签
+    el.innerHTML = `<div class="roster-grid">${filtered.map(p => `
+      <div class="roster-card">
+        <div>
+          <div class="roster-name">
+            ${p.is_captain ? '<span class="captain-icon">★</span>' : ''}
+            ${p.player_type === 'vehicle' ? '<span class="vehicle-icon">🚗</span>' : ''}
+            ${p.name}
+          </div>
+          <div class="roster-info">${p.team||'待定'} · ${p.player_type === 'vehicle' ? '载具队' : '步战队'}</div>
         </div>
-        <div class="roster-info">${p.team||'—'} · ${p.player_type === 'vehicle' ? '载具队' : '步战队'}</div>
-      </div>
-      <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="deletePlayer(${p.id},'${p.name}')">删除</button>
-    </div>`).join('')}</div>`;
+        <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="deletePlayer(${p.id},'${p.name}')">删除</button>
+      </div>`).join('')}</div>`;
+  } else {
+    // 战队模式：内部分步战/载具两组
+    el.innerHTML =
+      renderRosterGroup(filtered, '步战队', 'infantry') +
+      renderRosterGroup(filtered, '载具队', 'vehicle');
+  }
 }
 
 function showAddPlayer() { document.getElementById('add-player-form').style.display = ''; }
