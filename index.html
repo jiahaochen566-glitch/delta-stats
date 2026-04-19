@@ -1068,7 +1068,10 @@ function matchRowHTML(m) {
   const openBadge = m.match_open ? `<span class="match-open ${m.match_open==='进攻'?'open-atk':'open-def'}">${m.match_open}开</span>` : '';
   return `<div class="match-row" onclick="viewMatch(${m.id})">
     <div style="display:flex;align-items:center;gap:16px">
-      <div class="match-time">${m.match_time ? m.match_time.slice(0,5) : '—'}</div>
+      <div style="min-width:110px">
+        <div class="match-time" style="font-size:13px;color:var(--text2)">${m.match_date||''}</div>
+        <div class="match-time">${m.match_time ? m.match_time.slice(0,5) : '—'}</div>
+      </div>
       <div>
         <div class="match-teams">${m.team1||'情久'} <span class="match-vs">VS</span> ${m.team2||'对手'}</div>
         <div class="match-info" style="margin-top:4px">
