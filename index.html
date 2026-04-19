@@ -631,6 +631,12 @@ tr:hover td { background: #fafafa; }
         <div class="section-title" id="player-tab-title">步战队排名</div>
         <div class="filter-bar" style="margin:0">
           <input type="text" id="search-player" placeholder="搜索选手..." oninput="filterPlayers()">
+          <select id="filter-team-for-player" onchange="renderPlayerTable(allPlayerRows)">
+            <option value="">全部战队</option>
+            <option value="情久">情久</option>
+            <option value="奇迹">奇迹</option>
+            <option value="待定">待定</option>
+          </select>
           <select id="filter-match-for-player" onchange="loadPlayerStats()">
             <option value="">全部比赛</option>
           </select>
@@ -1365,16 +1371,21 @@ async function loadPlayerStats() {
     grouped[s.player_name].games.add(s.match_id);
   });
 
-  allPlayerRows = Object.entries(grouped).map(([name, d]) => ({
-    name,
-    games: d.games.size,
-    total_kills: d.kills,
-    avg_kills: (d.kills / d.games.size).toFixed(1),
-    kd_val: kd(d.kills, d.deaths),
-    kda_val: kda(d.kills, d.deaths, d.assists),
-    total_rescues: d.rescues,
-    player_type: getRosterByName(name).player_type || 'infantry'
-  })).sort((a,b) => parseFloat(b.kd_val) - parseFloat(a.kd_val));
+  allPlayerRows = Object.entries(grouped).map(([name, d]) => {
+    const rInfo = getRosterByName(name);
+    if (!rInfo || !rInfo.id) return null; // 不在选手库的跳过
+    return {
+      name,
+      games: d.games.size,
+      total_kills: d.kills,
+      avg_kills: (d.kills / d.games.size).toFixed(1),
+      kd_val: kd(d.kills, d.deaths),
+      kda_val: kda(d.kills, d.deaths, d.assists),
+      total_rescues: d.rescues,
+      player_type: rInfo.player_type || 'infantry',
+      team: rInfo.team || '待定'
+    };
+  }).filter(Boolean).sort((a,b) => parseFloat(b.kd_val) - parseFloat(a.kd_val));
 
   renderPlayerTable(allPlayerRows);
 }
@@ -1394,7 +1405,9 @@ function sortPlayerTable(field) {
 }
 
 function renderPlayerTable(rows) {
+  const teamFilter = document.getElementById('filter-team-for-player') ? document.getElementById('filter-team-for-player').value : '';
   let filtered = rows.filter(r => r.player_type === currentPlayerTab);
+  if (teamFilter) filtered = filtered.filter(r => (r.team || '待定') === teamFilter);
 
   // 排序
   if (playerSortDir === 0 || !playerSortField) {
