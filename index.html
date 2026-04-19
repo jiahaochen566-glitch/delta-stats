@@ -1011,8 +1011,13 @@ async function loadOverview() {
   document.getElementById('ov-kills').textContent = fmtNum(totalKills);
   document.getElementById('ov-winrate').textContent = total ? Math.round(wins/total*100)+'%' : '—';
 
-  // Recent matches
-  const recent = matches ? matches.sort((a,b) => b.match_date > a.match_date ? 1 : -1).slice(0,5) : [];
+  // Recent matches - 按日期+时间从新到旧
+  const sorted = matches ? [...matches].sort((a,b) => {
+    const da = a.match_date + (a.match_time||'00:00');
+    const db2 = b.match_date + (b.match_time||'00:00');
+    return db2 > da ? 1 : -1;
+  }) : [];
+  const recent = sorted.slice(0, 8);
   const el = document.getElementById('overview-recent');
   if (!recent.length) { el.innerHTML = '<div class="empty">暂无比赛记录</div>'; return; }
   el.innerHTML = '<div class="date-group"><div class="date-group-body">' +
